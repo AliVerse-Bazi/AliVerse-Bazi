@@ -173,7 +173,7 @@ st.markdown("""
         box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
 
-    /* === HUD 儀表板動畫特效 === */
+    /* HUD 動畫特效 */
     .hud-overlay {
         position: fixed;
         top: 0;
@@ -365,7 +365,7 @@ if st.session_state['analyzed']:
     lunar = solar.getLunar()
     bazi = lunar.getEightChar()
     
-    # --- [關鍵修改] 繁簡轉換函式 ---
+    # 繁簡轉換
     def simple_to_trad(text):
         mapping = {
             "龙": "龍", "马": "馬", "鸡": "雞", "猪": "豬",
@@ -376,9 +376,9 @@ if st.session_state['analyzed']:
         return text
 
     lunar_year = lunar.getYearInGanZhi()
-    lunar_month = simple_to_trad(lunar.getMonthInChinese()) # 轉繁體
+    lunar_month = simple_to_trad(lunar.getMonthInChinese()) 
     lunar_day = lunar.getDayInChinese()
-    zodiac = simple_to_trad(lunar.getYearShengXiao()) # 轉繁體
+    zodiac = simple_to_trad(lunar.getYearShengXiao())
 
     wuxing_map = {
         "甲": "木", "乙": "木", "丙": "火", "丁": "火", "戊": "土", "己": "土", "庚": "金", "辛": "金", "壬": "水", "癸": "水",
@@ -421,10 +421,11 @@ if st.session_state['analyzed']:
     ascii_art = ""
     trad_term = ""
     
-    if score >= 80:
+    # === [關鍵更新] V18.0 身強身弱邏輯修正 (>45% 為強) ===
+    if score >= 85:
         trad_term = "命理格局：從強格 (特殊專旺)"
         car_name = "🛡️ 陸地航母：重裝坦克"
-        car_desc = "您的格局特殊，能量專一且強大，不再是普通的車，而是陸地霸主！從強格的特質是「越強越好」，順著氣勢能成大業。無視路障，適合開疆闢土，但個性可能較為固執強勢。"
+        car_desc = "您的格局特殊，能量專一且強大，不再是普通的車，而是陸地霸主！建議順勢而為，適合開疆闢土。"
         spec_cc = "6,000cc 柴油渦輪"
         spec_intake = "V12 雙渦輪增壓"
         spec_fuel = "高耗能 (爆發力強)"
@@ -441,17 +442,17 @@ if st.session_state['analyzed']:
   █  AliVerse Tank █
   ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀"""
         
-    elif score >= 60:
+    elif score > 45: # 修改：大於 45 即為身強
         trad_term = "命理格局：身強 (能量充沛)"
         car_name = "🚜 V8 雙渦輪：全地形越野車"
-        car_desc = "您是一台擁有怪力的 G-Class 等級越野車！板金厚實，馬力強大。您不怕路爛，只怕沒路跑導致引擎積碳。適合高強度的挑戰，不要把自己關在舒適圈的車庫裡。"
+        car_desc = "您的幫扶能量超過 45%，屬於「身強」格局。像一台馬力強大的 G-Class，不怕困難，只怕沒地方發揮！適合高強度挑戰，忌過度保護。"
         spec_cc = "4,000cc V8"
         spec_intake = "雙渦輪增壓"
         spec_fuel = "1 公升跑 6 公里"
         spec_mod = "潛力極高 (可升高底盤)"
         bg_color = "rgba(46, 125, 50, 0.3)" 
         border_color = "#2E7D32"
-        joyful_gods = [output, wealth, officer]
+        joyful_gods = [output, wealth, officer] # 喜克洩耗
         taboo_gods = [peer, resource]
         ascii_art = """
       ____  
@@ -460,10 +461,10 @@ if st.session_state['analyzed']:
     (o)----(o)
    [ SUV-4WD ]"""
 
-    elif score >= 40:
+    elif score >= 35: # 35-45 之間為中和/偏弱
         trad_term = "命理格局：中和 (身強偏平)"
         car_name = "🏎️ 自然進氣：豪華性能房車"
-        car_desc = "您是一台平衡性極佳的 BMW 5系列或 E-Class！擁有 3.0 直列六缸的絲滑動力。進可攻、退可守，是道路上最可靠的夥伴。您不需要太誇張的改裝，只要維持良好狀態就能跑很久。"
+        car_desc = "您的能量在 35%~45% 之間，屬於平衡性極佳的 BMW 5系列等級。進可攻、退可守，性格穩重，是道路上最可靠的夥伴。"
         spec_cc = "3,000cc"
         spec_intake = "直列六缸 自然進氣 (NA)"
         spec_fuel = "1 公升跑 10 公里"
@@ -479,17 +480,17 @@ if st.session_state['analyzed']:
     (o)-----(o)
     [  SEDAN  ]"""
         
-    elif score >= 20:
+    elif score >= 15:
         trad_term = "命理格局：身弱 (心思細膩)"
         car_name = "🚘 經典敞篷：限量古董跑車"
-        car_desc = "您是一台極具價值的經典敞篷車 (Vintage Roadster)！雖然排氣量不大，但工藝精密、氣質優雅。您不適合去泥巴地越野，也不適合飆高速。需要細心呵護、定期回原廠保養，開的是「品味」不是「速度」。"
+        car_desc = "您的幫扶能量低於 35%，屬於「身弱」格局。這不是壞事，代表您像經典敞篷車一樣精密優雅。不適合硬碰硬，適合智取與合作，需要定期保養（學習/休息）。"
         spec_cc = "2,000cc 精密引擎"
         spec_intake = "自然進氣"
         spec_fuel = "1 公升跑 12 公里"
         spec_mod = "不建議 (維持原廠)"
         bg_color = "rgba(198, 40, 40, 0.3)" 
         border_color = "#C62828"
-        joyful_gods = [peer, resource]
+        joyful_gods = [peer, resource] # 喜幫扶
         taboo_gods = [output, wealth, officer]
         ascii_art = """
        ___
@@ -501,7 +502,7 @@ if st.session_state['analyzed']:
     else:
         trad_term = "命理格局：從弱格 (棄命從勢)"
         car_name = "🛸 未來科技：磁浮概念車"
-        car_desc = "您的格局特殊，本身能量極弱，但能完全順應環境大勢。這不是弱，而是一種極致的適應力。像變形金剛一樣，借力使力，順著大環境的氣流飛行。"
+        car_desc = "您的格局特殊，自身能量極低，能完全順應環境大勢（棄命從勢）。這是極致的適應力，像變形金剛一樣，借力使力，順著大環境的氣流飛行。"
         spec_cc = "無 (反重力)"
         spec_intake = "磁浮驅動"
         spec_fuel = "無限續航"
@@ -532,8 +533,6 @@ if st.session_state['analyzed']:
     # === [動畫特效區] ===
     if submit_btn:
         animation_placeholder = st.empty()
-        
-        # 定義加速函式
         def show_hud(speed, status_text, text_style):
             percent = min(speed / 333 * 100, 100)
             animation_placeholder.markdown(f"""
@@ -618,7 +617,7 @@ if st.session_state['analyzed']:
         st.success("✅ 權限解鎖成功！")
         time.sleep(0.5)
 
-        # 1. 農曆與八字 (已套用繁體修正)
+        # 1. 農曆與八字
         st.header(f"📄 {display_name} 的原廠性能規格表")
         st.markdown(f"""
         <div style="background-color: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; margin-bottom: 25px; border-left: 5px solid #FFD700; display: flex; align-items: center;">
@@ -641,8 +640,40 @@ if st.session_state['analyzed']:
                 st.markdown(f"<h2 style='text-align: center; color: {colors.get(gan_wx, 'black')}'>{gan_char}</h2>", unsafe_allow_html=True)
                 st.markdown(f"<h2 style='text-align: center; color: {colors.get(zhi_wx, 'black')}'>{zhi_char}</h2>", unsafe_allow_html=True)
                 st.caption(f"{gan_wx} / {zhi_wx}")
-                
+        
+        # === [新增功能] 命盤深度掃描 (地支沖合與十神) ===
+        st.write("")
+        st.subheader("🔍 命盤深度掃描")
+        
+        # 1. 地支關係運算
+        branches = {year_zhi, month_zhi, day_zhi, time_zhi}
+        interactions = []
+        # 三合
+        if {'申', '子', '辰'} <= branches: interactions.append("🌊 申子辰 三合水局 (大吉)")
+        if {'寅', '午', '戌'} <= branches: interactions.append("🔥 寅午戌 三合火局 (大吉)")
+        if {'亥', '卯', '未'} <= branches: interactions.append("🌲 亥卯未 三合木局 (大吉)")
+        if {'巳', '酉', '丑'} <= branches: interactions.append("⚔️ 巳酉丑 三合金局 (大吉)")
+        # 六沖
+        clashes = [('子','午'), ('丑','未'), ('寅','申'), ('卯','酉'), ('辰','戌'), ('巳','亥')]
+        found_clash = False
+        branch_list = [year_zhi, month_zhi, day_zhi, time_zhi]
+        for b1, b2 in clashes:
+            if b1 in branch_list and b2 in branch_list:
+                interactions.append(f"💥 {b1}{b2} 六沖 (變動大)")
+                found_clash = True
+        
+        if not interactions:
+            interactions.append("✅ 命盤地支平穩，無重大刑沖合害")
+
+        st.markdown(f"""
+        <div style="border: 1px solid rgba(255, 255, 255, 0.2); padding: 15px; border-radius: 10px; background-color: rgba(0,0,0,0.2);">
+            <b>🧬 地支化學反應：</b><br>
+            {'<br>'.join(interactions)}
+        </div>
+        """, unsafe_allow_html=True)
+
         # 2. 五行圖表
+        st.write("")
         st.subheader("📊 原廠零件庫存清單 (五行能量)")
         counts = {"金": 0, "木": 0, "水": 0, "火": 0, "土": 0}
         all_chars = [p[1] for p in pillars_data] + [p[2] for p in pillars_data]
@@ -714,6 +745,9 @@ if st.session_state['analyzed']:
 ------------------------------------
 【性能深度分析】
 {car_desc}
+------------------------------------
+【地支互動掃描】
+{' | '.join(interactions)}
 ------------------------------------
 【能量優化方案】
 建議添加 (喜用神)：{'、'.join(joyful_gods)}
