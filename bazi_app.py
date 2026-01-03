@@ -11,16 +11,19 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- 2. CSS 樣式美化 (含隱藏 Footer) ---
+# --- 2. CSS 樣式美化 (強力隱藏浮水印版) ---
 st.markdown("""
     <style>
     /* 全局字體 */
     body { font-family: '微軟正黑體', sans-serif; }
 
-    /* 隱藏 Streamlit 預設的漢堡選單與頁腳 */
+    /* --- 強力隱藏 Streamlit 預設元件 --- */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
+    .stDeployButton {display:none;}
+    div[data-testid="stDecoration"] {visibility: hidden;}
+    div[data-testid="stStatusWidget"] {visibility: hidden;}
     
     /* Hero Banner 樣式 */
     .hero-container {
@@ -99,7 +102,7 @@ st.markdown("""
         text-align: center;
     }
     
-    /* ASCII Art 樣式 */
+    /* ASCII Art 樣式 (車型圖騰) */
     .ascii-art {
         font-family: 'Courier New', Courier, monospace; 
         white-space: pre; 
@@ -318,7 +321,7 @@ if submit_btn:
     ascii_art = ""
     trad_term = ""
     
-    # --- 車型定義 ---
+    # --- 車型定義 (確保 ASCII 與 HTML 正常) ---
     if score >= 80:
         trad_term = "命理格局：從強格 (特殊專旺)"
         car_name = "🛡️ 陸地航母：重裝坦克"
@@ -415,7 +418,7 @@ if submit_btn:
     /       \ 
    [   UFO   ]"""
 
-    # 顯示車型卡片
+    # 顯示車型卡片 (使用 f-string 組合 HTML)
     html_content = f"""<div style="padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border: 2px solid {border_color}; background-color: {bg_color};">
     <div class="trad-badge">{trad_term}</div>
     <h2 style="margin-bottom: 10px;">{car_name}</h2>
@@ -499,7 +502,7 @@ if submit_btn:
     
     st.write("---")
     
-    # --- 分享區塊 ---
+    # --- 分享區塊 (移除導購) ---
     st.subheader("📤 邀請朋友一起來尬車")
     
     share_text = f"""🚀 剛剛在 AliVerse 測了我的生命載具！
@@ -517,7 +520,7 @@ https://aliverse-bazi.streamlit.app"""
     st.info("👇 複製下方文字，分享到 Line 或 IG，看看誰的車最猛！")
     st.code(share_text, language="text")
     
-    # 下載內容
+    # 下載內容 (UTF-8 BOM 修復版)
     report_content = f"""
 【AliVerse 愛力宇宙 - 原廠車型鑑定報告】
 ------------------------------------
