@@ -11,21 +11,12 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- 2. CSS 樣式美化 (強力隱藏浮水印版) ---
+# --- 2. CSS 樣式美化 ---
 st.markdown("""
     <style>
-    /* 全局字體 */
     body { font-family: '微軟正黑體', sans-serif; }
-
-    /* --- 強力隱藏 Streamlit 預設元件 --- */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-    .stDeployButton {display:none;}
-    div[data-testid="stDecoration"] {visibility: hidden;}
-    div[data-testid="stStatusWidget"] {visibility: hidden;}
     
-    /* Hero Banner 樣式 */
+    /* Hero Banner */
     .hero-container {
         background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
         color: white;
@@ -80,7 +71,7 @@ st.markdown("""
         box-shadow: 0 8px 20px rgba(255, 75, 75, 0.4);
     }
     
-    /* 輸入框標題優化 */
+    /* 輸入框標題 */
     .stTextInput label, .stNumberInput label, .stSelectbox label, .stRadio label {
         font-size: 16px;
         font-weight: 600;
@@ -92,7 +83,7 @@ st.markdown("""
         }
     }
     
-    /* 結果卡片樣式 */
+    /* 結果卡片 */
     .result-card {
         background-color: rgba(255, 255, 255, 0.05);
         padding: 20px;
@@ -102,7 +93,7 @@ st.markdown("""
         text-align: center;
     }
     
-    /* ASCII Art 樣式 (車型圖騰) */
+    /* ASCII Art */
     .ascii-art {
         font-family: 'Courier New', Courier, monospace; 
         white-space: pre; 
@@ -117,7 +108,7 @@ st.markdown("""
         justify-content: center;
     }
 
-    /* 車型規格表樣式 */
+    /* 車型規格表 */
     .spec-table {
         background-color: rgba(0, 0, 0, 0.3);
         border-radius: 10px;
@@ -321,7 +312,7 @@ if submit_btn:
     ascii_art = ""
     trad_term = ""
     
-    # --- 車型定義 (確保 ASCII 與 HTML 正常) ---
+    # --- 車型定義 ---
     if score >= 80:
         trad_term = "命理格局：從強格 (特殊專旺)"
         car_name = "🛡️ 陸地航母：重裝坦克"
@@ -418,7 +409,7 @@ if submit_btn:
     /       \ 
    [   UFO   ]"""
 
-    # 顯示車型卡片 (使用 f-string 組合 HTML)
+    # 顯示車型卡片 (HTML 字串不縮排)
     html_content = f"""<div style="padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border: 2px solid {border_color}; background-color: {bg_color};">
     <div class="trad-badge">{trad_term}</div>
     <h2 style="margin-bottom: 10px;">{car_name}</h2>
@@ -502,7 +493,7 @@ if submit_btn:
     
     st.write("---")
     
-    # --- 分享區塊 (移除導購) ---
+    # --- 分享區塊 (移除導購，保留分享) ---
     st.subheader("📤 邀請朋友一起來尬車")
     
     share_text = f"""🚀 剛剛在 AliVerse 測了我的生命載具！
@@ -520,7 +511,7 @@ https://aliverse-bazi.streamlit.app"""
     st.info("👇 複製下方文字，分享到 Line 或 IG，看看誰的車最猛！")
     st.code(share_text, language="text")
     
-    # 下載內容 (UTF-8 BOM 修復版)
+    # 下載內容 (已修復亂碼問題)
     report_content = f"""
 【AliVerse 愛力宇宙 - 原廠車型鑑定報告】
 ------------------------------------
@@ -554,7 +545,7 @@ https://aliverse-bazi.streamlit.app
     
     st.download_button(
         label="📥 下載完整車檢報告 (txt)",
-        data=report_content.encode('utf-8-sig'),
+        data=report_content.encode('utf-8-sig'), # 關鍵修正：加入 utf-8-sig 編碼
         file_name=f"AliVerse_{display_name}_車檢報告.txt",
         mime="text/plain"
     )
