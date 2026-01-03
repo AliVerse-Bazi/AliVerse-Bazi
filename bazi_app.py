@@ -421,11 +421,11 @@ if st.session_state['analyzed']:
     ascii_art = ""
     trad_term = ""
     
-    # === [關鍵更新] V18.0 身強身弱邏輯修正 (>45% 為強) ===
+    # === 身強身弱邏輯 (V18.0) ===
     if score >= 85:
         trad_term = "命理格局：從強格 (特殊專旺)"
         car_name = "🛡️ 陸地航母：重裝坦克"
-        car_desc = "您的格局特殊，能量專一且強大，不再是普通的車，而是陸地霸主！建議順勢而為，適合開疆闢土。"
+        car_desc = "您的格局特殊，能量專一且強大，不再是普通的車，而是陸地霸主！從強格的特質是「越強越好」，順著氣勢能成大業。無視路障，適合開疆闢土，但個性可能較為固執強勢。"
         spec_cc = "6,000cc 柴油渦輪"
         spec_intake = "V12 雙渦輪增壓"
         spec_fuel = "高耗能 (爆發力強)"
@@ -442,7 +442,7 @@ if st.session_state['analyzed']:
   █  AliVerse Tank █
   ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀"""
         
-    elif score > 45: # 修改：大於 45 即為身強
+    elif score > 45: 
         trad_term = "命理格局：身強 (能量充沛)"
         car_name = "🚜 V8 雙渦輪：全地形越野車"
         car_desc = "您的幫扶能量超過 45%，屬於「身強」格局。像一台馬力強大的 G-Class，不怕困難，只怕沒地方發揮！適合高強度挑戰，忌過度保護。"
@@ -461,7 +461,7 @@ if st.session_state['analyzed']:
     (o)----(o)
    [ SUV-4WD ]"""
 
-    elif score >= 35: # 35-45 之間為中和/偏弱
+    elif score >= 35: 
         trad_term = "命理格局：中和 (身強偏平)"
         car_name = "🏎️ 自然進氣：豪華性能房車"
         car_desc = "您的能量在 35%~45% 之間，屬於平衡性極佳的 BMW 5系列等級。進可攻、退可守，性格穩重，是道路上最可靠的夥伴。"
@@ -641,11 +641,9 @@ if st.session_state['analyzed']:
                 st.markdown(f"<h2 style='text-align: center; color: {colors.get(zhi_wx, 'black')}'>{zhi_char}</h2>", unsafe_allow_html=True)
                 st.caption(f"{gan_wx} / {zhi_wx}")
         
-        # === [新增功能] 命盤深度掃描 (地支沖合與十神) ===
+        # === 命盤深度掃描 ===
         st.write("")
         st.subheader("🔍 命盤深度掃描")
-        
-        # 1. 地支關係運算
         branches = {year_zhi, month_zhi, day_zhi, time_zhi}
         interactions = []
         # 三合
@@ -672,12 +670,23 @@ if st.session_state['analyzed']:
         </div>
         """, unsafe_allow_html=True)
 
-        # 2. 五行圖表
+        # === [V19.2 修正] 雙圖表戰情室 (強制色彩對齊) ===
         st.write("")
         st.subheader("📊 原廠零件庫存清單 (五行能量)")
+        
+        # 定義顏色對應 (強制對應，不依賴系統自動分配)
+        color_map = {
+            "金": "#FFD700", # 金 -> 黃色
+            "木": "#228B22", # 木 -> 綠色
+            "水": "#1E90FF", # 水 -> 藍色
+            "火": "#FF4500", # 火 -> 紅色
+            "土": "#8B4513"  # 土 -> 咖啡色
+        }
+
+        # 資料準備 (加入 color 欄位)
         counts = {"金": 0, "木": 0, "水": 0, "火": 0, "土": 0}
         all_chars = [p[1] for p in pillars_data] + [p[2] for p in pillars_data]
-        total_chars = 8
+        total_chars = len(all_chars)
         for char in all_chars:
             wx = wuxing_map.get(char)
             if wx in counts:
@@ -685,17 +694,51 @@ if st.session_state['analyzed']:
         data = []
         for wx, count in counts.items():
             percentage = (count / total_chars) * 100
-            label = f"{count} ({percentage:.0f}%)"
-            data.append({"五行": wx, "數量": count, "標籤": label})
+            label = f"{count}" 
+            pie_label = f"{wx} {percentage:.0f}%" if count > 0 else ""
+            data.append({
+                "五行": wx, 
+                "數量": count, 
+                "百分比": percentage, 
+                "標籤": label, 
+                "圓餅標籤": pie_label,
+                "color": color_map.get(wx, "#808080") # 強制綁定顏色
+            })
         df = pd.DataFrame(data)
-        base = alt.Chart(df).encode(
-            x=alt.X('五行', axis=alt.Axis(labelAngle=0, title="五行屬性")),
-            y=alt.Y('數量', axis=alt.Axis(title="數量 (個)", titleAngle=0, titleY=-10)),
-            color=alt.Color('五行', scale=alt.Scale(domain=['金', '木', '水', '火', '土'], range=['#FFD700', '#228B22', '#1E90FF', '#FF4500', '#8B4513']))
+        
+        # 1. 圓餅圖 (使用 color 欄位直接指定顏色)
+        pie_base = alt.Chart(df).encode(
+            theta=alt.Theta("數量", stack=True).sort("descending"), # 強制按數量排序
+            color=alt.Color("color", scale=None), # 直接使用 color 欄位的色碼
+            order=alt.Order("數量", sort="descending") # 確保堆疊順序一致
         )
-        bars = base.mark_bar()
-        text = base.mark_text(align='center', baseline='bottom', dy=-5, fontSize=14).encode(text='標籤')
-        st.altair_chart((bars + text), use_container_width=True)
+        pie = pie_base.mark_arc(outerRadius=80).encode(
+            tooltip=["五行", "數量", alt.Tooltip("百分比", format=".1f")]
+        )
+        pie_text = pie_base.mark_text(radius=110).encode(
+            text="圓餅標籤",
+            order=alt.Order("數量", sort="descending"), # 文字排序必須與扇形一致
+            color=alt.value("#ffffff")
+        )
+        chart_pie = (pie + pie_text).properties(title="能量佔比 (Pie)")
+
+        # 2. 長條圖
+        bar_base = alt.Chart(df).encode(
+            x=alt.X('五行', axis=alt.Axis(labelAngle=0, title="")),
+            y=alt.Y('數量', axis=alt.Axis(title="數量", tickMinStep=1)),
+            color=alt.Color('color', scale=None), # 直接使用 color 欄位
+            tooltip=["五行", "數量", alt.Tooltip("百分比", format=".1f")]
+        )
+        bars = bar_base.mark_bar().encode()
+        bar_text = bar_base.mark_text(dy=-10).encode(text='標籤')
+        chart_bar = (bars + bar_text).properties(title="數量統計 (Bar)")
+
+        # 並排顯示
+        col_chart1, col_chart2 = st.columns(2)
+        with col_chart1:
+            st.altair_chart(chart_pie, use_container_width=True)
+        with col_chart2:
+            st.altair_chart(chart_bar, use_container_width=True)
 
         # 3. 喜忌神
         st.subheader("💡 能量調節建議")
