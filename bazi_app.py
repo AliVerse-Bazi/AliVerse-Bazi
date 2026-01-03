@@ -3,84 +3,123 @@ import pandas as pd
 from lunar_python import Lunar, Solar
 import altair as alt
 import datetime
+import time
+import streamlit.components.v1 as components
 
-# --- 1. 網頁設定 (含密碼鎖預留位置) ---
+# --- 1. 網頁設定 ---
 st.set_page_config(
     page_title="AliVerse 愛力宇宙",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
 
-# --- 如果您未來要開啟訂閱制密碼鎖，請把下面這段註解拿掉 ---
-# SECRET_PASSWORD = "ALI2026" 
-# with st.sidebar:
-#     st.header("🔐 VIP 權限解鎖")
-#     user_password = st.text_input("請輸入本月通行密碼", type="password")
-#     if user_password != SECRET_PASSWORD:
-#         st.warning("請輸入密碼解鎖完整功能 (目前為預覽模式)")
-
-# --- 2. CSS 樣式美化 (修復顯示問題 + 商品卡片) ---
+# --- 2. CSS 樣式美化 (含儀表板特效與平滑滾動) ---
 st.markdown("""
     <style>
-    /* 全局字體 */
-    body { font-family: '微軟正黑體', sans-serif; }
+    /* 全局設定 */
+    html { scroll-behavior: smooth; }
+    body { font-family: '微軟正黑體', sans-serif; overflow-x: hidden; }
     
-    /* Hero Banner 樣式 */
+    /* Hero Banner (升級版：融合價值與促銷) */
     .hero-container {
-        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
         color: white;
         padding: 40px 30px;
         border-radius: 15px;
         text-align: center;
         margin-bottom: 30px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.4);
         border: 1px solid rgba(255, 255, 255, 0.1);
+        position: relative;
+        overflow: hidden;
     }
+    
+    /* 限時免費標籤 */
+    .free-badge {
+        background-color: #FFD700;
+        color: #000;
+        padding: 6px 18px;
+        border-radius: 20px;
+        font-weight: 900;
+        font-size: 1em;
+        display: inline-block;
+        margin-bottom: 20px;
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+        animation: pulse 2s infinite;
+        letter-spacing: 1px;
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+
     .hero-title {
-        font-size: 3em;
+        font-size: 2.8em;
         font-weight: 800;
-        margin: 0;
+        margin: 0 0 10px 0;
         background: linear-gradient(to right, #ffd700, #ffecb3);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         letter-spacing: 2px;
     }
-    .hero-subtitle {
-        font-size: 1.2em;
-        color: #a0a0a0;
-        margin-top: 10px;
-        font-weight: 500;
-    }
-    .hero-intro {
-        margin-top: 30px;
-        font-size: 1.1em;
-        line-height: 1.8;
-        color: #e0e0e0;
+    
+    .hero-desc {
         text-align: left;
-        display: inline-block;
-        max-width: 800px;
+        font-size: 1.05em;
+        color: #e0e0e0;
+        line-height: 1.8;
+        margin-top: 20px;
+        background: rgba(0,0,0,0.2);
+        padding: 20px;
+        border-radius: 10px;
     }
-    .highlight { color: #ffd700; font-weight: bold; }
+    
+    .highlight { color: #FFD700; font-weight: bold; }
+    
+    .price-tag {
+        font-size: 1.2em;
+        margin-top: 20px;
+        font-weight: bold;
+        color: #fff;
+    }
+    .original-price {
+        text-decoration: line-through;
+        color: #aaa;
+        font-size: 0.9em;
+        margin-right: 10px;
+    }
+    .free-price {
+        color: #FF4B4B;
+        font-size: 1.4em;
+        text-shadow: 0 0 10px rgba(255, 75, 75, 0.5);
+    }
 
     /* 按鈕樣式 */
     .stButton>button {
         width: 100%;
         border-radius: 12px;
-        height: 4em;
+        height: 4.5em;
         background: linear-gradient(to right, #FF4B4B, #FF2B2B);
         color: white;
         font-weight: bold;
-        font-size: 20px;
-        box-shadow: 0 6px 15px rgba(255, 75, 75, 0.3);
+        font-size: 22px;
+        box-shadow: 0 6px 20px rgba(255, 75, 75, 0.4);
         border: none;
-        transition: all 0.3s ease;
+        transition: all 0.2s ease;
+        margin-top: 10px;
+    }
+    .stButton>button:active {
+        transform: scale(0.96);
+        box-shadow: 0 2px 10px rgba(255, 75, 75, 0.3);
     }
     .stButton>button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(255, 75, 75, 0.4);
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(255, 75, 75, 0.5);
     }
     
-    /* 輸入框標題優化 */
+    /* 輸入框樣式 */
     .stTextInput label, .stNumberInput label, .stSelectbox label, .stRadio label {
         font-size: 16px;
         font-weight: 600;
@@ -92,7 +131,57 @@ st.markdown("""
         }
     }
     
-    /* 結果卡片樣式 */
+    /* === 🏎️ 儀表板加速特效樣式 === */
+    .dashboard-container {
+        background: radial-gradient(circle at center, #222, #000);
+        border: 2px solid #444;
+        border-radius: 15px;
+        padding: 30px 20px;
+        text-align: center;
+        margin-top: 20px;
+        box-shadow: 0 0 40px rgba(0, 255, 255, 0.15);
+    }
+    .speed-number {
+        font-family: 'Courier New', monospace;
+        font-size: 5em;
+        font-weight: 900;
+        color: #00e5ff;
+        text-shadow: 0 0 25px #00e5ff;
+        line-height: 1;
+        margin-bottom: 10px;
+    }
+    .speed-unit {
+        font-size: 0.3em;
+        color: #aaa;
+        font-weight: normal;
+    }
+    .status-text {
+        color: #FFD700;
+        font-weight: bold;
+        margin-top: 15px;
+        font-size: 1.3em;
+        letter-spacing: 2px;
+        animation: blink 0.5s infinite alternate;
+    }
+    @keyframes blink { from { opacity: 0.7; } to { opacity: 1; } }
+    
+    .progress-bar-bg {
+        width: 100%;
+        height: 12px;
+        background-color: #222;
+        border-radius: 6px;
+        margin-top: 20px;
+        overflow: hidden;
+        border: 1px solid #333;
+    }
+    .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #ff0000, #ff8800, #ffff00, #00ff00);
+        width: 0%;
+        box-shadow: 0 0 15px rgba(255, 255, 0, 0.5);
+    }
+
+    /* 結果卡片與 ASCII Art */
     .result-card {
         background-color: rgba(255, 255, 255, 0.05);
         padding: 20px;
@@ -101,8 +190,6 @@ st.markdown("""
         border: 1px solid rgba(255,255,255,0.1);
         text-align: center;
     }
-    
-    /* ASCII Art 樣式 */
     .ascii-art {
         font-family: 'Courier New', Courier, monospace; 
         white-space: pre; 
@@ -116,8 +203,31 @@ st.markdown("""
         display: flex;
         justify-content: center;
     }
-
-    /* 車型規格表樣式 */
+    
+    /* 專家諮詢區塊 */
+    .expert-block {
+        margin-top: 30px;
+        padding: 20px;
+        border: 1px solid #4CAF50;
+        border-radius: 15px;
+        background: rgba(76, 175, 80, 0.1);
+        text-align: center;
+    }
+    
+    /* 傳統命理標籤 */
+    .trad-badge {
+        display: inline-block;
+        background-color: #FFD700;
+        color: #000;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.9em;
+        font-weight: bold;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    /* 規格表 */
     .spec-table {
         background-color: rgba(0, 0, 0, 0.3);
         border-radius: 10px;
@@ -136,62 +246,22 @@ st.markdown("""
     }
     .spec-label { color: #bbb; font-size: 0.9em; }
     .spec-value { font-weight: bold; color: #fff; text-align: right;}
-    
-    /* 傳統命理標籤 */
-    .trad-badge {
-        display: inline-block;
-        background-color: #FFD700;
-        color: #000;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.9em;
-        font-weight: bold;
-        margin-bottom: 15px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    }
-
-    /* 商品推薦卡片 (Fourthwall) */
-    .merch-card {
-        border: 1px solid rgba(255, 75, 75, 0.3);
-        border-radius: 15px;
-        padding: 20px;
-        margin-bottom: 20px;
-        background: linear-gradient(145deg, rgba(255, 75, 75, 0.1) 0%, rgba(0,0,0,0.2) 100%);
-        text-align: center;
-        transition: transform 0.2s;
-    }
-    .merch-card:hover {
-        transform: translateY(-5px);
-        border-color: #FF4B4B;
-    }
-    .merch-btn {
-        display: inline-block;
-        background-color: #FF4B4B;
-        color: white !important;
-        text-decoration: none;
-        padding: 10px 20px;
-        border-radius: 25px;
-        font-weight: bold;
-        margin-top: 15px;
-        box-shadow: 0 4px 10px rgba(255, 75, 75, 0.3);
-    }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 3. 主視覺 Hero Banner ---
+# --- 3. 主視覺 Hero Banner (升級文案 + 吉利定價) ---
 st.markdown("""
 <div class="hero-container">
-<h1 class="hero-title">AliVerse 愛力宇宙</h1>
-<p class="hero-subtitle">科技命理・生命載具調校專家</p>
-<div class="hero-intro">
-人生，就像駕駛一台結構精密的載具。<br>
-AliVerse 的核心價值，在於透過數據，協助您<span class="highlight">【迅速且直覺】</span>地掌握這台載具的<span class="highlight">【原廠配備】</span>。<br><br>
-我們深信，理解數據是為了獲得智慧。<br>
-當您看清並接受自己的優勢與特質，便能在人生的道路上<span class="highlight">【坦然前行】</span>；<br>
-當您深刻了解自己，便能對他人產生更多的<span class="highlight">【理解與同理】</span>。<br><br>
-我們期盼每個人都能藉此<span class="highlight">【綻放出獨一無二的光芒】</span>，<br>
-在<span class="highlight">【愛自己】</span>的同時也能給予他人更多<span class="highlight">【關懷】</span>，<br>
-讓我們一起<span class="highlight">【照亮整個愛力的宇宙】</span>。
+<div class="free-badge">✨ 限時免費開放中 ✨</div>
+<h1 class="hero-title">AliVerse 生命導航</h1>
+<div class="hero-desc">
+    <p>人生，就像駕駛一台結構精密的載具。</p>
+    <p>AliVerse 建立在古今中外廣大的<span class="highlight">【大數據資料庫】</span>之上，將傳承千年的古老智慧，轉化為嚴謹的<span class="highlight">【計算與統計】</span>結果。</p>
+    <p>我們協助您看清自己的<b>「原廠引擎性能」</b>，掌握天賦優勢，讓您在 2026 的賽道上跑得更穩、更順遂。</p>
+</div>
+<div class="price-tag">
+    服務價值：<span class="original-price">$77.88 USD</span> 
+    <span class="free-price">今日 0 元啟動</span>
 </div>
 </div>
 """, unsafe_allow_html=True)
@@ -230,7 +300,7 @@ with st.container(border=True):
     ], index=None, placeholder="請點選出生時辰") 
 
     st.write("")
-    submit_btn = st.button("🚀 啟動性能分析")
+    submit_btn = st.button("🚀 啟動引擎 (Launch Engine)")
 
 # --- 5. 運算與結果顯示區 ---
 if submit_btn:
@@ -248,6 +318,53 @@ if submit_btn:
         st.error(f"⚠️ 日期錯誤：{int(inp_month)}月沒有{int(inp_day)}號喔！請重新檢查。")
         st.stop()
     
+    # === 🏎️ 啟動加速動畫 (3秒長度，50個步驟) ===
+    anim_placeholder = st.empty()
+    
+    # 設置總動畫時間約為 3 秒
+    # 我們讓速度顯示到 288 km/h (吉利數字)
+    max_speed = 288 
+    steps = 50 
+    sleep_time = 0.06 # 0.06 * 50 = 3.0 秒
+    
+    for i in range(steps + 1):
+        progress = i / steps
+        current_speed = int(progress * max_speed)
+        
+        status = "引擎點火..."
+        if progress > 0.2: status = "一階渦輪介入..."
+        if progress > 0.5: status = "二階動力全開！"
+        if progress > 0.8: status = "氮氣噴射 NITRO 🚀"
+        
+        # 動態更新 HTML 儀表板
+        anim_placeholder.markdown(f"""
+        <div class="dashboard-container">
+            <div class="speed-number">{current_speed}<span class="speed-unit"> km/h</span></div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" style="width: {int(progress * 100)}%;"></div>
+            </div>
+            <div class="status-text">{status}</div>
+        </div>
+        """, unsafe_allow_html=True)
+        time.sleep(sleep_time) 
+        
+    # 動畫結束後，清空區塊
+    anim_placeholder.empty()
+    
+    # === 自動滾動 (Auto-Scroll) ===
+    # 建立一個定位點，然後用 JS 滾動到這裡
+    st.markdown("<div id='result_start'></div>", unsafe_allow_html=True)
+    components.html(
+        """
+        <script>
+            window.parent.document.getElementById('result_start').scrollIntoView({behavior: 'smooth', block: 'start'});
+        </script>
+        """,
+        height=0
+    )
+    
+    # === 以下是運算邏輯 ===
+    
     display_name = name if name.strip() else "貴賓"
     
     hour_map = {
@@ -259,12 +376,9 @@ if submit_btn:
     }
     h = hour_map.get(birth_hour, 12)
     
-    # 排盤
     solar = Solar.fromYmdHms(birth_date.year, birth_date.month, birth_date.day, h, 0, 0)
     lunar = solar.getLunar()
     bazi = lunar.getEightChar()
-    
-    st.write("---")
     
     # 1. 標題與農曆
     st.header(f"📄 {display_name} 的原廠性能規格表")
@@ -342,14 +456,20 @@ if submit_btn:
         if char_wx == day_master_wx or char_wx == resource_wx:
             score += w
             
-    # 變數定義
     joyful_gods = [] 
     taboo_gods = []
     ascii_art = ""
-    trad_term = "" # 傳統命理術語
+    trad_term = ""
+    car_name = ""
+    car_desc = ""
+    spec_cc = ""
+    spec_intake = ""
+    spec_fuel = ""
+    spec_mod = ""
+    bg_color = ""
+    border_color = ""
     
-    # --- 車型與規格定義 ---
-    # 邏輯分為 5 個等級：>80, 60-80, 40-60, 20-40, <20
+    # --- 車型定義 ---
     if score >= 80:
         trad_term = "命理格局：從強格 (特殊專旺)"
         car_name = "🛡️ 陸地航母：重裝坦克"
@@ -368,8 +488,7 @@ if submit_btn:
   ░░░██████████░░░░░
   ░▄▄████████████▄▄░
   █  AliVerse Tank █
-  ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
-        """
+  ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀"""
         
     elif score >= 60:
         trad_term = "命理格局：身強 (能量充沛)"
@@ -388,8 +507,7 @@ if submit_btn:
      /  | \_ 
     |___|___\_
     (o)----(o)
-   [ SUV-4WD ]
-        """
+   [ SUV-4WD ]"""
 
     elif score >= 40:
         trad_term = "命理格局：中和 (身強偏平)"
@@ -408,8 +526,7 @@ if submit_btn:
      /  |   \_
     |___|_____\__
     (o)-----(o)
-    [  SEDAN  ]
-        """
+    [  SEDAN  ]"""
         
     elif score >= 20:
         trad_term = "命理格局：身弱 (心思細膩)"
@@ -428,8 +545,7 @@ if submit_btn:
      _/___\_
     [_______]
     (o)   (o)
-   [ VINTAGE ]
-        """
+   [ VINTAGE ]"""
 
     else:
         trad_term = "命理格局：從弱格 (棄命從勢)"
@@ -448,25 +564,23 @@ if submit_btn:
     _/__~__\_
    (_________)
     /       \ 
-   [   UFO   ]
-        """
+   [   UFO   ]"""
 
-    # 顯示車型卡片 (修復版 HTML)
-    html_content = f"""
-    <div style="padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border: 2px solid {border_color}; background-color: {bg_color};">
-        <div class="trad-badge">{trad_term}</div>
-        <h2 style="margin-bottom: 10px;">{car_name}</h2>
-        <div style="font-size: 1.5em; margin: 5px 0; font-weight:bold;">能量指數：{score}%</div>
-        <div class="ascii-art"><pre>{ascii_art}</pre></div>
-        <p style="font-size: 1.1em; line-height: 1.6; text-align: left; margin-top:15px;"><b>📝 性能分析：</b><br>{car_desc}</p>
-        <div class="spec-table">
-            <div class="spec-row"><span class="spec-label">⚙️ 引擎規格</span> <span class="spec-value">{spec_cc}</span></div>
-            <div class="spec-row"><span class="spec-label">💨 進氣方式</span> <span class="spec-value">{spec_intake}</span></div>
-            <div class="spec-row"><span class="spec-label">⛽ 油耗表現</span> <span class="spec-value">{spec_fuel}</span></div>
-            <div class="spec-row" style="border-bottom: none;"><span class="spec-label">🔧 改裝潛力</span> <span class="spec-value">{spec_mod}</span></div>
-        </div>
+    # 顯示車型卡片 (HTML 字串不縮排)
+    html_content = f"""<div style="padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border: 2px solid {border_color}; background-color: {bg_color};">
+    <div class="trad-badge">{trad_term}</div>
+    <h2 style="margin-bottom: 10px;">{car_name}</h2>
+    <div style="font-size: 1.5em; margin: 5px 0; font-weight:bold;">能量指數：{score}%</div>
+    <div class="ascii-art">{ascii_art}</div>
+    <p style="font-size: 1.1em; line-height: 1.6; text-align: left; margin-top:15px;"><b>📝 性能分析：</b><br>{car_desc}</p>
+    <div class="spec-table">
+        <div class="spec-row"><span class="spec-label">⚙️ 引擎規格</span> <span class="spec-value">{spec_cc}</span></div>
+        <div class="spec-row"><span class="spec-label">💨 進氣方式</span> <span class="spec-value">{spec_intake}</span></div>
+        <div class="spec-row"><span class="spec-label">⛽ 油耗表現</span> <span class="spec-value">{spec_fuel}</span></div>
+        <div class="spec-row" style="border-bottom: none;"><span class="spec-label">🔧 改裝潛力</span> <span class="spec-value">{spec_mod}</span></div>
     </div>
-    """
+</div>"""
+
     st.markdown(html_content, unsafe_allow_html=True)
     
     # 喜忌神
@@ -536,76 +650,6 @@ if submit_btn:
     
     st.write("---")
     
-    # === 新增：AliVerse 開運選物店 (帶貨引擎) ===
-    st.subheader("🛍️ AliVerse 專屬開運裝備")
-    st.markdown("根據您的喜用神能量，我們為您精選了能增強運勢的幸運單品：")
-
-    # 定義推薦邏輯 (請替換成真正的 Fourthwall 商品連結)
-    recommendations = []
-    
-    if "火" in joyful_gods:
-        recommendations.append({
-            "name": "🔥 燃燒小宇宙・經典紅帽T",
-            "desc": "火能量是您的原動力！穿上它，補充源源不絕的熱情與財運。",
-            "link": "https://ali-verse.fourthwall.com/products/red-hoodie", # 請替換
-            "btn": "🛒 入手火能量裝備"
-        })
-        
-    if "金" in joyful_gods:
-        recommendations.append({
-            "name": "⚡ 鈦金屬意志・極簡項鍊",
-            "desc": "金能量代表決斷與權力。配戴金屬飾品，強化您的氣場與執行力。",
-            "link": "https://ali-verse.fourthwall.com/products/metal-chain",
-            "btn": "🛒 補充金能量"
-        })
-        
-    if "水" in joyful_gods:
-        recommendations.append({
-            "name": "💧 深海智慧・午夜黑老帽",
-            "desc": "水能量主宰智慧與人脈。黑色系單品能讓您在社交場合游刃有餘。",
-            "link": "https://ali-verse.fourthwall.com/products/black-hat",
-            "btn": "🛒 獲取水能量智慧"
-        })
-        
-    if "木" in joyful_gods:
-        recommendations.append({
-            "name": "🌲 生生不息・森林綠帆布袋",
-            "desc": "木能量象徵成長與發展。綠色單品能助您事業蒸蒸日上。",
-            "link": "https://ali-verse.fourthwall.com/products/green-bag",
-            "btn": "🛒 培養木能量"
-        })
-        
-    if "土" in joyful_gods:
-        recommendations.append({
-            "name": "⛰️ 穩如泰山・大地色機能外套",
-            "desc": "土能量代表信任與財庫。大地色系能幫您守住財富，穩健前行。",
-            "link": "https://ali-verse.fourthwall.com/products/earth-jacket",
-            "btn": "🛒 鞏固土能量根基"
-        })
-
-    # 通用款
-    if not recommendations:
-        recommendations.append({
-            "name": "🌟 AliVerse 宇宙能量・限量紀念T",
-            "desc": "平衡五行的經典之作，適合所有追求卓越的駕駛員。",
-            "link": "https://ali-verse.fourthwall.com/products/classic-tee",
-            "btn": "🛒 收藏經典能量"
-        })
-
-    # 顯示推薦卡片
-    for item in recommendations:
-        st.markdown(f"""
-        <div class="merch-card">
-            <h3 style="margin: 0 0 10px 0; color: #fff;">{item['name']}</h3>
-            <p style="color: #ddd; font-size: 1em; margin-bottom: 15px;">{item['desc']}</p>
-            <a href="{item['link']}" target="_blank" class="merch-btn">
-                {item['btn']}
-            </a>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    st.write("---")
-    
     # --- 分享區塊 ---
     st.subheader("📤 邀請朋友一起來尬車")
     
@@ -624,41 +668,55 @@ https://aliverse-bazi.streamlit.app"""
     st.info("👇 複製下方文字，分享到 Line 或 IG，看看誰的車最猛！")
     st.code(share_text, language="text")
     
-    # 下載內容
-    report_content = f"""
-    【AliVerse 愛力宇宙 - 原廠車型鑑定報告】
-    ------------------------------------
-    駕駛：{display_name}
-    {trad_term}
-    車型：{car_name}
-    能量：{score}%
-    ------------------------------------
-    【車型圖騰】
-    {ascii_art}
-    ------------------------------------
-    【詳細規格表】
-    引擎：{spec_cc}
-    進氣：{spec_intake}
-    油耗：{spec_fuel}
-    改裝：{spec_mod}
-    ------------------------------------
-    【性能分析】
-    {car_desc}
-    ------------------------------------
-    【油品建議】
-    建議添加 (喜用)：{'、'.join(joyful_gods)}
-    避免使用 (忌神)：{'、'.join(taboo_gods)}
-    ------------------------------------
-    【2026 路況預報】
-    {advice_2026}
-    ------------------------------------
-    AliVerse 愛力宇宙
-    https://aliverse-bazi.streamlit.app
-    """
+    # --- 專家諮詢區塊 (Upsell) ---
+    st.write("---")
+    st.subheader("🕵️‍♂️ 需要更精密的改裝建議？")
+    st.markdown("""
+    <div class="expert-block">
+        <p style="margin-bottom: 15px;">目前的檢測屬於「原廠標準規格」大數據分析。<br>如果您正面臨<b>創業、轉職、人生重大十字路口</b>，<br>需要更深入的客製化戰略...</p>
+        <a href="https://your-booking-link.com" target="_blank" style="text-decoration:none;">
+            <button style="background-color:#4CAF50; color:white; border:none; padding:12px 25px; border-radius:25px; font-size:16px; font-weight:bold; cursor:pointer; box-shadow: 0 4px 10px rgba(76,175,80,0.3);">
+                📅 預約 Ali 老師一對一戰略諮詢
+            </button>
+        </a>
+        <p style="color:#aaa; font-size:0.8em; margin-top:10px;">* 每月名額有限，額滿為止</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # --- 下載按鈕 (亂碼修復版) ---
+    report_content = f"""【AliVerse 愛力宇宙 - 原廠車型鑑定報告】
+------------------------------------
+駕駛：{display_name}
+{trad_term}
+車型：{car_name}
+能量：{score}%
+------------------------------------
+【車型圖騰】
+{ascii_art}
+------------------------------------
+【詳細規格表】
+引擎：{spec_cc}
+進氣：{spec_intake}
+油耗：{spec_fuel}
+改裝：{spec_mod}
+------------------------------------
+【性能分析】
+{car_desc}
+------------------------------------
+【油品建議】
+建議添加 (喜用)：{'、'.join(joyful_gods)}
+避免使用 (忌神)：{'、'.join(taboo_gods)}
+------------------------------------
+【2026 路況預報】
+{advice_2026}
+------------------------------------
+AliVerse 愛力宇宙
+https://aliverse-bazi.streamlit.app
+"""
     
     st.download_button(
         label="📥 下載完整車檢報告 (txt)",
-        data=report_content,
+        data=report_content.encode('utf-8-sig'), # 關鍵：UTF-8 BOM 編碼
         file_name=f"AliVerse_{display_name}_車檢報告.txt",
         mime="text/plain"
     )
