@@ -7,11 +7,21 @@ import time
 import random
 import urllib.parse
 
-# --- 1. 網頁設定 ---
+# --- 1. 網頁設定 (V25.0 側邊欄優化版) ---
 st.set_page_config(
-    page_title="AliVerse 愛力宇宙",
+    page_title="AliVerse 八字五行分析 - 2026運勢免費測 | 原廠車型鑑定",
+    page_icon="🏎️",
     layout="centered",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="collapsed",
+    menu_items={
+        'Get Help': 'https://lin.ee/3woTmES',      
+        'Report a bug': "https://lin.ee/3woTmES", 
+        'About': """
+        # 🏎️ AliVerse 愛力宇宙
+        這是一個結合 **科技數據** 與 **傳統命理** 的生命導航系統。
+        **© 2026 AliVerse All Rights Reserved.**
+        """
+    }
 )
 
 # 定義解鎖密碼
@@ -23,13 +33,11 @@ st.markdown("""
     body { font-family: '微軟正黑體', sans-serif; }
     
     /* === 強力隱藏 Streamlit 預設元件 === */
-    [data-testid="stToolbar"] { display: none !important; }
     .stDeployButton { display: none !important; }
-    div[data-testid="stToolbar"] { display: none !important; }
     [data-testid="stDecoration"] { display: none !important; }
-    header { display: none !important; }
+    header { visibility: visible !important; background: transparent !important; }
     footer { display: none !important; }
-    #MainMenu { display: none !important; }
+    #MainMenu { display: inline-block !important; }
     [data-testid="stStatusWidget"] { display: none !important; }
     
     /* Hero Banner */
@@ -42,7 +50,7 @@ st.markdown("""
         margin-bottom: 30px;
         box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         border: 1px solid rgba(255, 255, 255, 0.1);
-        margin-top: -50px;
+        margin-top: -30px;
     }
     .hero-title {
         font-size: 3em;
@@ -278,6 +286,62 @@ st.markdown("""
     }
     </style>
     """, unsafe_allow_html=True)
+
+# === [V25.0 更新] 側邊欄設定 ===
+with st.sidebar:
+    st.markdown("## 👨‍✈️ 駕駛員中心")
+    st.info("👋 歡迎來到 AliVerse 愛力宇宙數據中心。")
+    
+    # 1. 核心變現 (最醒目)
+    st.link_button("🛒 前往官方商城 (贊助開發)", "https://aliverse-shop.fourthwall.com/", type="primary") 
+    
+    st.markdown("---")
+    
+    # 2. 社群與客服 (分組)
+    st.markdown("**📡 訊號連結**")
+    st.link_button("📺 觀看 YouTube 頻道", "https://www.youtube.com/@Ali_Universe") 
+    st.link_button("💬 加入 LINE 官方帳號", "https://lin.ee/3woTmES")
+    
+    # [未來預留] 您可以在這裡加入 IG 和 FB，建議使用 st.columns 並排，比較省空間
+    # col_social_1, col_social_2 = st.columns(2)
+    # with col_social_1:
+    #     st.link_button("📸 IG", "您的IG連結")
+    # with col_social_2:
+    #     st.link_button("📘 FB", "您的FB連結")
+    
+    st.markdown("---")
+    
+    # 3. 歷史軌跡
+    st.markdown("### 📢 系統公告")
+    st.success("✅ 目前版本：V25.0 (最新)")
+    
+    with st.expander("📜 點此查看版本更新軌跡"):
+        st.markdown("""
+        **V25.0 (介面優化)**
+        - 🛒 側邊欄連結重組與文案更新
+        - 📢 支援未來多社群平台擴充
+
+        **V20.0 - V24.0 (流量與變現)**
+        - 🚀 完成 SEO 搜尋引擎優化
+        - 🔗 串接 Fourthwall 商城贊助
+        - 💬 整合 LINE/YouTube 客服系統
+        - 📊 戰情室級別雙圖表 (色彩對齊)
+
+        **V18.0 (核心運算升級)**
+        - 🧠 導入 45% 身強身弱判斷邏輯
+        - 🔍 新增地支刑沖合害深度掃描
+        - ⚡ 十神配置運算引擎
+
+        **V10.0 - V17.0 (使用者體驗)**
+        - 🎨 繁體中文語系全面優化
+        - 🏎️ HUD 儀表板開場動畫
+        - 🔐 VIP 權限密碼鎖功能
+        - 📤 社交裂變分享按鈕 (LINE/IG)
+        """)
+        st.caption("感謝您一路以來的支持！")
+    
+    st.markdown("---")
+    st.markdown("© 2026 AliVerse")
 
 # --- 3. 主視覺 Hero Banner ---
 st.markdown("""
@@ -646,12 +710,10 @@ if st.session_state['analyzed']:
         st.subheader("🔍 命盤深度掃描")
         branches = {year_zhi, month_zhi, day_zhi, time_zhi}
         interactions = []
-        # 三合
         if {'申', '子', '辰'} <= branches: interactions.append("🌊 申子辰 三合水局 (大吉)")
         if {'寅', '午', '戌'} <= branches: interactions.append("🔥 寅午戌 三合火局 (大吉)")
         if {'亥', '卯', '未'} <= branches: interactions.append("🌲 亥卯未 三合木局 (大吉)")
         if {'巳', '酉', '丑'} <= branches: interactions.append("⚔️ 巳酉丑 三合金局 (大吉)")
-        # 六沖
         clashes = [('子','午'), ('丑','未'), ('寅','申'), ('卯','酉'), ('辰','戌'), ('巳','亥')]
         found_clash = False
         branch_list = [year_zhi, month_zhi, day_zhi, time_zhi]
@@ -670,11 +732,10 @@ if st.session_state['analyzed']:
         </div>
         """, unsafe_allow_html=True)
 
-        # === [V19.2 修正] 雙圖表戰情室 (強制色彩對齊) ===
+        # === 雙圖表戰情室 (強制色彩對齊) ===
         st.write("")
         st.subheader("📊 原廠零件庫存清單 (五行能量)")
         
-        # 定義顏色對應 (強制對應，不依賴系統自動分配)
         color_map = {
             "金": "#FFD700", # 金 -> 黃色
             "木": "#228B22", # 木 -> 綠色
@@ -683,7 +744,6 @@ if st.session_state['analyzed']:
             "土": "#8B4513"  # 土 -> 咖啡色
         }
 
-        # 資料準備 (加入 color 欄位)
         counts = {"金": 0, "木": 0, "水": 0, "火": 0, "土": 0}
         all_chars = [p[1] for p in pillars_data] + [p[2] for p in pillars_data]
         total_chars = len(all_chars)
@@ -702,38 +762,35 @@ if st.session_state['analyzed']:
                 "百分比": percentage, 
                 "標籤": label, 
                 "圓餅標籤": pie_label,
-                "color": color_map.get(wx, "#808080") # 強制綁定顏色
+                "color": color_map.get(wx, "#808080")
             })
         df = pd.DataFrame(data)
         
-        # 1. 圓餅圖 (使用 color 欄位直接指定顏色)
         pie_base = alt.Chart(df).encode(
-            theta=alt.Theta("數量", stack=True).sort("descending"), # 強制按數量排序
-            color=alt.Color("color", scale=None), # 直接使用 color 欄位的色碼
-            order=alt.Order("數量", sort="descending") # 確保堆疊順序一致
+            theta=alt.Theta("數量", stack=True).sort("descending"),
+            color=alt.Color("color", scale=None),
+            order=alt.Order("數量", sort="descending")
         )
         pie = pie_base.mark_arc(outerRadius=80).encode(
             tooltip=["五行", "數量", alt.Tooltip("百分比", format=".1f")]
         )
         pie_text = pie_base.mark_text(radius=110).encode(
             text="圓餅標籤",
-            order=alt.Order("數量", sort="descending"), # 文字排序必須與扇形一致
+            order=alt.Order("數量", sort="descending"),
             color=alt.value("#ffffff")
         )
         chart_pie = (pie + pie_text).properties(title="能量佔比 (Pie)")
 
-        # 2. 長條圖
         bar_base = alt.Chart(df).encode(
             x=alt.X('五行', axis=alt.Axis(labelAngle=0, title="")),
             y=alt.Y('數量', axis=alt.Axis(title="數量", tickMinStep=1)),
-            color=alt.Color('color', scale=None), # 直接使用 color 欄位
+            color=alt.Color('color', scale=None),
             tooltip=["五行", "數量", alt.Tooltip("百分比", format=".1f")]
         )
         bars = bar_base.mark_bar().encode()
         bar_text = bar_base.mark_text(dy=-10).encode(text='標籤')
         chart_bar = (bars + bar_text).properties(title="數量統計 (Bar)")
 
-        # 並排顯示
         col_chart1, col_chart2 = st.columns(2)
         with col_chart1:
             st.altair_chart(chart_pie, use_container_width=True)
