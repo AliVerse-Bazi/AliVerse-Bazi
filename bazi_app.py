@@ -1,10 +1,8 @@
 import streamlit as st
-import pandas as pd # <--- 關鍵修復：補回 pandas 套件
+import pandas as pd
 from lunar_python import Lunar, Solar
 import altair as alt
 import datetime
-import time
-import random
 
 # --- 1. 網頁設定 ---
 st.set_page_config(
@@ -13,20 +11,18 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# 定義解鎖密碼
-UNLOCK_CODE = "ALI888"
-
-# --- 2. CSS 樣式美化 (含 V13.0 炸裂光暈特效) ---
+# --- 2. CSS 樣式美化 (含隱藏 Footer) ---
 st.markdown("""
     <style>
+    /* 全局字體 */
     body { font-family: '微軟正黑體', sans-serif; }
-    
-    /* 隱藏 Streamlit 原生元素 */
+
+    /* 隱藏 Streamlit 預設的漢堡選單與頁腳 */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
     
-    /* Hero Banner */
+    /* Hero Banner 樣式 */
     .hero-container {
         background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
         color: white;
@@ -36,7 +32,6 @@ st.markdown("""
         margin-bottom: 30px;
         box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         border: 1px solid rgba(255, 255, 255, 0.1);
-        margin-top: -50px;
     }
     .hero-title {
         font-size: 3em;
@@ -52,6 +47,15 @@ st.markdown("""
         color: #a0a0a0;
         margin-top: 10px;
         font-weight: 500;
+    }
+    .hero-intro {
+        margin-top: 30px;
+        font-size: 1.1em;
+        line-height: 1.8;
+        color: #e0e0e0;
+        text-align: left;
+        display: inline-block;
+        max-width: 800px;
     }
     .highlight { color: #ffd700; font-weight: bold; }
 
@@ -73,7 +77,7 @@ st.markdown("""
         box-shadow: 0 8px 20px rgba(255, 75, 75, 0.4);
     }
     
-    /* 輸入框優化 */
+    /* 輸入框標題優化 */
     .stTextInput label, .stNumberInput label, .stSelectbox label, .stRadio label {
         font-size: 16px;
         font-weight: 600;
@@ -85,7 +89,7 @@ st.markdown("""
         }
     }
     
-    /* 結果卡片 */
+    /* 結果卡片樣式 */
     .result-card {
         background-color: rgba(255, 255, 255, 0.05);
         padding: 20px;
@@ -95,7 +99,7 @@ st.markdown("""
         text-align: center;
     }
     
-    /* ASCII Art */
+    /* ASCII Art 樣式 */
     .ascii-art {
         font-family: 'Courier New', Courier, monospace; 
         white-space: pre; 
@@ -110,7 +114,7 @@ st.markdown("""
         justify-content: center;
     }
 
-    /* 車型規格表 */
+    /* 車型規格表樣式 */
     .spec-table {
         background-color: rgba(0, 0, 0, 0.3);
         border-radius: 10px;
@@ -142,111 +146,6 @@ st.markdown("""
         margin-bottom: 15px;
         box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
-
-    /* === V13.0 HUD 儀表板動畫特效 === */
-    .hud-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background: radial-gradient(circle, rgba(20,20,30,0.95) 0%, rgba(0,0,0,1) 100%);
-        z-index: 99999;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        text-align: center;
-        color: #FFD700;
-    }
-    /* 網格背景 */
-    .hud-grid {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        background-image: 
-            linear-gradient(rgba(255, 215, 0, 0.1) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255, 215, 0, 0.1) 1px, transparent 1px);
-        background-size: 50px 50px;
-        opacity: 0.2;
-        z-index: -1;
-    }
-    .speed-container {
-        border: 2px solid rgba(255, 215, 0, 0.3);
-        border-radius: 50%;
-        width: 300px;
-        height: 300px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        background: rgba(0,0,0,0.8);
-        box-shadow: 0 0 30px rgba(255, 75, 75, 0.2);
-        transition: all 0.1s;
-    }
-    .speed-val {
-        font-family: 'Courier New', monospace;
-        font-size: 5.5em;
-        font-weight: 800;
-        line-height: 1;
-        text-shadow: 0 0 15px currentColor; 
-    }
-    .speed-unit {
-        font-size: 1.2em;
-        color: #aaa;
-        margin-top: 5px;
-    }
-    .rpm-bar {
-        width: 80%;
-        height: 10px;
-        background: #333;
-        margin-top: 15px;
-        border-radius: 5px;
-        overflow: hidden;
-    }
-    .rpm-fill {
-        height: 100%;
-        background: linear-gradient(90deg, #39FF14, #FFD700, #FF0000);
-        transition: width 0.1s;
-    }
-    .hud-status {
-        margin-top: 30px;
-        font-size: 1.5em;
-        letter-spacing: 2px;
-        color: #fff;
-        animation: flicker 0.2s infinite alternate;
-    }
-    @keyframes flicker {
-        0% { opacity: 0.8; }
-        100% { opacity: 1; text-shadow: 0 0 10px white; }
-    }
-
-    /* 解鎖任務區塊 */
-    .lock-box {
-        border: 2px dashed #FF4B4B;
-        background-color: rgba(255, 75, 75, 0.05);
-        padding: 25px;
-        border-radius: 15px;
-        text-align: center;
-        margin-top: 30px;
-    }
-    .lock-title {
-        color: #FF4B4B; 
-        font-size: 1.5em; 
-        font-weight: bold; 
-        margin-bottom: 10px;
-    }
-    .line-link {
-        color: #FFD700;
-        text-decoration: none;
-        font-weight: bold;
-        border-bottom: 1px solid #FFD700;
-        transition: all 0.3s;
-    }
-    .line-link:hover {
-        color: #fff;
-        border-bottom: 1px solid #fff;
-    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -256,9 +155,14 @@ st.markdown("""
 <h1 class="hero-title">AliVerse 愛力宇宙</h1>
 <p class="hero-subtitle">科技命理・生命載具調校專家</p>
 <div class="hero-intro">
-歡迎來到 AliVerse 原廠檢測中心。<br>
-在這裡，我們將透過您的出廠數據（八字），<br>
-解密您的<span class="highlight">【核心引擎】</span>與<span class="highlight">【駕駛風格】</span>。<br>
+人生，就像駕駛一台結構精密的載具。<br>
+AliVerse 的核心價值，在於透過數據，協助您<span class="highlight">【迅速且直覺】</span>地掌握這台載具的<span class="highlight">【原廠配備】</span>。<br><br>
+我們深信，理解數據是為了獲得智慧。<br>
+當您看清並接受自己的優勢與特質，便能在人生的道路上<span class="highlight">【坦然前行】</span>；<br>
+當您深刻了解自己，便能對他人產生更多的<span class="highlight">【理解與同理】</span>。<br><br>
+我們期盼每個人都能藉此<span class="highlight">【綻放出獨一無二的光芒】</span>，<br>
+在<span class="highlight">【愛自己】</span>的同時也能給予他人更多<span class="highlight">【關懷】</span>，<br>
+讓我們一起<span class="highlight">【照亮整個愛力的宇宙】</span>。
 </div>
 </div>
 """, unsafe_allow_html=True)
@@ -280,11 +184,11 @@ with st.container(border=True):
     d_col1, d_col2, d_col3 = st.columns([1.5, 1, 1]) 
     
     with d_col1:
-        inp_year = st.number_input("年 (Year)", min_value=1900, max_value=2026, value=None, placeholder="yyyy", format="%d", step=1)
+        inp_year = st.number_input("年 (Year)", min_value=1900, max_value=2026, value=None, placeholder="例如 1979", format="%d", step=1)
     with d_col2:
-        inp_month = st.number_input("月 (Month)", min_value=1, max_value=12, value=None, placeholder="MM", format="%d", step=1)
+        inp_month = st.number_input("月 (Month)", min_value=1, max_value=12, value=None, placeholder="月份", format="%d", step=1)
     with d_col3:
-        inp_day = st.number_input("日 (Day)", min_value=1, max_value=31, value=None, placeholder="DD", format="%d", step=1)
+        inp_day = st.number_input("日 (Day)", min_value=1, max_value=31, value=None, placeholder="日期", format="%d", step=1)
         
     st.write("")
     
@@ -297,31 +201,26 @@ with st.container(border=True):
     ], index=None, placeholder="請點選出生時辰") 
 
     st.write("")
-    # 初始化 session state
-    if 'analyzed' not in st.session_state:
-        st.session_state['analyzed'] = False
-    
-    submit_btn = st.button("🚀 啟動引擎 (開始分析)")
+    submit_btn = st.button("🚀 啟動性能分析")
 
 # --- 5. 運算與結果顯示區 ---
 if submit_btn:
-    st.session_state['analyzed'] = True
-
-if st.session_state['analyzed']:
     # 檢查輸入
-    if inp_year is None or inp_month is None or inp_day is None or birth_hour is None:
-        st.error("⚠️ 資料不完整，請檢查輸入。")
+    if inp_year is None or inp_month is None or inp_day is None:
+        st.error("⚠️ 資料不完整：請輸入完整的出生【年、月、日】數字。")
+        st.stop()
+    if birth_hour is None:
+        st.error("⚠️ 資料不完整：請選擇【出生時辰】。")
         st.stop()
 
     try:
         birth_date = datetime.date(int(inp_year), int(inp_month), int(inp_day))
     except ValueError:
-        st.error("⚠️ 日期格式錯誤。")
+        st.error(f"⚠️ 日期錯誤：{int(inp_month)}月沒有{int(inp_day)}號喔！請重新檢查。")
         st.stop()
     
     display_name = name if name.strip() else "貴賓"
     
-    # === [後端運算區] 先算好，避免動畫跑完報錯 ===
     hour_map = {
         "00:00 - 00:59 (早子)": 0, "01:00 - 02:59 (丑)": 2, "03:00 - 04:59 (寅)": 4,
         "05:00 - 06:59 (卯)": 6, "07:00 - 08:59 (辰)": 8, "09:00 - 10:59 (巳)": 10,
@@ -336,17 +235,33 @@ if st.session_state['analyzed']:
     lunar = solar.getLunar()
     bazi = lunar.getEightChar()
     
+    st.write("---")
+    
+    # 1. 標題與農曆
+    st.header(f"📄 {display_name} 的原廠性能規格表")
     lunar_year = lunar.getYearInGanZhi()
     lunar_month = lunar.getMonthInChinese()
     lunar_day = lunar.getDayInChinese()
     zodiac = lunar.getYearShengXiao()
-
+    
+    st.markdown(f"""
+    <div style="background-color: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; margin-bottom: 25px; border-left: 5px solid #FFD700; display: flex; align-items: center;">
+        <div style="font-size: 2em; margin-right: 15px;">🗓️</div>
+        <div>
+            <div style="color: #a0a0a0; font-size: 0.9em;">對應農曆日期</div>
+            <div style="font-size: 1.3em; font-weight: bold; color: #FFD700;">
+                {lunar_year}年 {lunar_month}月 {lunar_day} <span style="color: #fff; font-size: 0.8em; background-color: #333; padding: 2px 8px; border-radius: 10px; margin-left: 5px;">屬{zodiac}</span>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
     wuxing_map = {
         "甲": "木", "乙": "木", "丙": "火", "丁": "火", "戊": "土", "己": "土", "庚": "金", "辛": "金", "壬": "水", "癸": "水",
         "子": "水", "丑": "土", "寅": "木", "卯": "木", "辰": "土", "巳": "火", "午": "火", "未": "土", "申": "金", "酉": "金", "戌": "土", "亥": "水"
     }
-    producing_map = {"木": "火", "火": "土", "土": "金", "金": "水", "水": "木"}
     colors = {"木": "green", "火": "red", "土": "brown", "金": "#DAA520", "水": "blue"}
+    producing_map = {"木": "火", "火": "土", "土": "金", "金": "水", "水": "木"}
     
     year_gan, year_zhi = str(bazi.getYearGan()), str(bazi.getYearZhi())
     month_gan, month_zhi = str(bazi.getMonthGan()), str(bazi.getMonthZhi())
@@ -359,18 +274,39 @@ if st.session_state['analyzed']:
         ("日柱 (本命)", day_gan, day_zhi),
         ("時柱 (晚年)", time_gan, time_zhi)
     ]
+    cols = st.columns(4)
+    for i, (title, gan_char, zhi_char) in enumerate(pillars_data):
+        gan_wx = wuxing_map.get(gan_char, "")
+        zhi_wx = wuxing_map.get(zhi_char, "")
+        with cols[i]:
+            st.markdown(f"**{title}**")
+            st.markdown(f"<h2 style='text-align: center; color: {colors.get(gan_wx, 'black')}'>{gan_char}</h2>", unsafe_allow_html=True)
+            st.markdown(f"<h2 style='text-align: center; color: {colors.get(zhi_wx, 'black')}'>{zhi_char}</h2>", unsafe_allow_html=True)
+            st.caption(f"{gan_wx} / {zhi_wx}")
+    
+    st.write("---")
+    
+    # --- 核心運算：車型判斷 ---
+    st.subheader("🏎️ 您的原廠車型鑑定")
     
     day_master_wx = wuxing_map.get(day_gan) 
     resource_wx = [k for k, v in producing_map.items() if v == day_master_wx][0]
+    
     elements_order = ["木", "火", "土", "金", "水"]
     idx = elements_order.index(day_master_wx)
+    
     peer = elements_order[idx]
     resource = elements_order[idx-1]
     output = elements_order[(idx+1)%5]
     wealth = elements_order[(idx+2)%5]
     officer = elements_order[(idx+3)%5]
     
-    weights = [(year_gan, 5), (year_zhi, 20), (month_gan, 5), (month_zhi, 35), (day_zhi, 20), (time_gan, 5), (time_zhi, 10)]
+    weights = [
+        (year_gan, 5), (year_zhi, 20),
+        (month_gan, 5), (month_zhi, 35),
+        (day_zhi, 20),
+        (time_gan, 5), (time_zhi, 10)
+    ]
     score = 0
     for char, w in weights:
         char_wx = wuxing_map.get(char)
@@ -382,6 +318,7 @@ if st.session_state['analyzed']:
     ascii_art = ""
     trad_term = ""
     
+    # --- 車型定義 ---
     if score >= 80:
         trad_term = "命理格局：從強格 (特殊專旺)"
         car_name = "🛡️ 陸地航母：重裝坦克"
@@ -477,75 +414,8 @@ if st.session_state['analyzed']:
    (_________)
     /       \ 
    [   UFO   ]"""
-    
-    advice_2026 = ""
-    icon = ""
-    border_2026 = ""
-    if "火" in joyful_gods:
-        advice_2026 = "恭喜！2026年是您的「高速公路衝刺段」。流年屬火，正好是您需要的燃油。油門踩下去，不用怕超速，這是您擴展事業、大顯身手的好時機！"
-        icon = "🚀"
-        border_2026 = "#FFD700"
-    else:
-        advice_2026 = "2026年路況較為壅塞，火氣太旺，引擎容易過熱。建議切換到「省油模式」，慢慢開、多保養。不要硬超車，安全抵達才是贏家。"
-        icon = "🛡️"
-        border_2026 = "#E0E0E0"
-        
-    # === [動畫特效區] V14.0 中文沉浸版 ===
-    if submit_btn:
-        animation_placeholder = st.empty()
-        
-        # 定義加速函式
-        def show_hud(speed, status_text, text_style):
-            percent = min(speed / 333 * 100, 100)
-            animation_placeholder.markdown(f"""
-            <div class="hud-overlay">
-                <div class="hud-grid"></div>
-                <div class="speed-container">
-                    <div class="speed-val" style="{text_style}">{speed}</div>
-                    <div class="speed-unit">km/h</div>
-                    <div class="rpm-bar"><div class="rpm-fill" style="width: {percent}%;"></div></div>
-                </div>
-                <div class="hud-status">{status_text}</div>
-            </div>
-            """, unsafe_allow_html=True)
 
-        # 1. 🟢 起步 (0-80) 螢光綠
-        for s in range(0, 81, 5):
-            show_hud(s, "系統暖機程序啟動...", "color: #39FF14; text-shadow: 0 0 15px #39FF14;")
-            time.sleep(0.04)
-            
-        # 2. 🟡 加速 (81-180) 黃金光
-        for s in range(81, 181, 10):
-            show_hud(s, "渦輪增壓全開！🚀", "color: #FFD700; text-shadow: 0 0 20px #FFD700;")
-            time.sleep(0.02)
-            
-        # 3. 🟠 高速 (181-280) 熔岩橘
-        for s in range(181, 281, 15):
-            show_hud(s, "動力極限輸出！⚠️", "color: #FF4500; text-shadow: 0 0 25px #FF4500;")
-            time.sleep(0.01)
-
-        # 4. 🔴 極速炸裂 (281-333) 地獄火紅 + 多層次光暈
-        bloom_style = """
-            color: #FF0000;
-            text-shadow: 
-                0 0 10px #ff0000,
-                0 0 20px #ff0000,
-                0 0 40px #ff0000,
-                0 0 80px #ff0000;
-            animation: flicker 0.1s infinite;
-        """
-        for s in range(281, 335, 20): # 超過一點到 333
-            display_s = min(s, 333)
-            show_hud(display_s, "氮氣噴射：靈魂超頻！💥", bloom_style)
-            time.sleep(0.005)
-            
-        time.sleep(0.8) # 停留極速炸裂畫面
-        animation_placeholder.empty()
-
-    # --- 顯示區 (免費版) ---
-    st.write("---")
-    st.subheader("🏎️ 您的原廠車型鑑定")
-    
+    # 顯示車型卡片
     html_content = f"""<div style="padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border: 2px solid {border_color}; background-color: {bg_color};">
     <div class="trad-badge">{trad_term}</div>
     <h2 style="margin-bottom: 10px;">{car_name}</h2>
@@ -559,117 +429,102 @@ if st.session_state['analyzed']:
         <div class="spec-row" style="border-bottom: none;"><span class="spec-label">🔧 改裝潛力</span> <span class="spec-value">{spec_mod}</span></div>
     </div>
 </div>"""
-    st.markdown(html_content, unsafe_allow_html=True)
 
-    # === 上鎖區域 ===
-    st.write("---")
-    st.markdown("""
-    <div class="lock-box">
-        <div class="lock-title">🔒 權限鎖定：詳細運勢資料庫</div>
-        <div class="lock-desc">
-            想要查看 <b>2026流年運勢</b>、<b>八字能量圖表</b> 與 <b>幸運能量建議</b>？<br><br>
-            1. <a href="https://lin.ee/3woTmES" target="_blank" class="line-link">👉 點此加入 LINE 官方帳號</a><br>
-            2. 輸入關鍵字<b>『report』</b>獲取通關密碼<br>
-            3. 在下方輸入密碼，立即解鎖分析
+    st.markdown(html_content, unsafe_allow_html=True)
+    
+    # 喜忌神
+    c1, c2 = st.columns(2)
+    with c1:
+        st.markdown(f"""
+        <div class="result-card" style="border-left: 5px solid #4CAF50;">
+            <h4 style="color: #4CAF50; margin:0;">⛽ 建議添加燃油 (喜用)</h4>
+            <p style="font-size: 1.2em; font-weight: bold; margin: 10px 0;">{'、'.join(joyful_gods)}</p>
+            <p style="font-size: 0.9em; color: #aaa;">這是您的優質汽油，多加這款油，車子跑更順。</p>
         </div>
+        """, unsafe_allow_html=True)
+    with c2:
+        st.markdown(f"""
+        <div class="result-card" style="border-left: 5px solid #F44336;">
+            <h4 style="color: #F44336; margin:0;">⛔ 容易導致積碳 (忌神)</h4>
+            <p style="font-size: 1.2em; font-weight: bold; margin: 10px 0;">{'、'.join(taboo_gods)}</p>
+            <p style="font-size: 0.9em; color: #aaa;">這款油品容易傷引擎，請盡量避免。</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # 2026 運勢
+    st.subheader("🔥 2026 (丙午年) 路況預報")
+    advice_2026 = ""
+    if "火" in joyful_gods:
+        advice_2026 = "恭喜！2026年是您的「高速公路衝刺段」。流年屬火，正好是您需要的燃油。油門踩下去，不用怕超速，這是您擴展事業、大顯身手的好時機！"
+        icon = "🚀"
+        border_2026 = "#FFD700"
+    else:
+        advice_2026 = "2026年路況較為壅塞，火氣太旺，引擎容易過熱。建議切換到「省油模式」，慢慢開、多保養。不要硬超車，安全抵達才是贏家。"
+        icon = "🛡️"
+        border_2026 = "#E0E0E0"
+        
+    st.markdown(f"""
+    <div style="background-color: rgba(255, 69, 0, 0.1); padding: 20px; border-radius: 10px; border: 1px solid {border_2026};">
+        <h4 style="color: #FF4500; margin-top: 0;">{icon} 2026 火馬年路況</h4>
+        <p style="font-size: 1.1em; line-height: 1.6;">{advice_2026}</p>
     </div>
     """, unsafe_allow_html=True)
     
-    c_lock1, c_lock2, c_lock3 = st.columns([1, 2, 1])
-    with c_lock2:
-        user_code = st.text_input("🔑 輸入解鎖碼", placeholder="在此輸入密碼...", label_visibility="collapsed")
+    st.write("---")
+
+    # 五行圖表
+    st.subheader("📊 原廠零件庫存清單")
+    counts = {"金": 0, "木": 0, "水": 0, "火": 0, "土": 0}
+    all_chars = [p[1] for p in pillars_data] + [p[2] for p in pillars_data]
+    total_chars = 8
+    for char in all_chars:
+        wx = wuxing_map.get(char)
+        if wx in counts:
+            counts[wx] += 1
+    data = []
+    for wx, count in counts.items():
+        percentage = (count / total_chars) * 100
+        label = f"{count} ({percentage:.0f}%)"
+        data.append({"五行": wx, "數量": count, "標籤": label})
+    df = pd.DataFrame(data)
+    base = alt.Chart(df).encode(
+        x=alt.X('五行', axis=alt.Axis(labelAngle=0, title="五行屬性")),
+        y=alt.Y('數量', axis=alt.Axis(title="數量 (個)", titleAngle=0, titleY=-10)),
+        color=alt.Color('五行', scale=alt.Scale(domain=['金', '木', '水', '火', '土'], range=['#FFD700', '#228B22', '#1E90FF', '#FF4500', '#8B4513']))
+    )
+    bars = base.mark_bar()
+    text = base.mark_text(align='center', baseline='bottom', dy=-5, fontSize=14).encode(text='標籤')
+    st.altair_chart((bars + text), use_container_width=True)
+    st.caption("說明：統計您命盤中金木水火土各類「零件」的庫存數量與比例。")
     
-    # === 解鎖後顯示區域 ===
-    if user_code == UNLOCK_CODE:
-        with st.spinner("🔄 正在驗證金鑰... 連線資料庫中..."):
-            time.sleep(1.5)
-        st.success("✅ 權限解鎖成功！")
-        time.sleep(0.5)
+    st.write("---")
+    
+    # --- 分享區塊 ---
+    st.subheader("📤 邀請朋友一起來尬車")
+    
+    share_text = f"""🚀 剛剛在 AliVerse 測了我的生命載具！
 
-        # 1. 農曆與八字
-        st.header(f"📄 {display_name} 的原廠性能規格表")
-        st.markdown(f"""
-        <div style="background-color: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; margin-bottom: 25px; border-left: 5px solid #FFD700; display: flex; align-items: center;">
-            <div style="font-size: 2em; margin-right: 15px;">🗓️</div>
-            <div>
-                <div style="color: #a0a0a0; font-size: 0.9em;">對應農曆日期</div>
-                <div style="font-size: 1.3em; font-weight: bold; color: #FFD700;">
-                    {lunar_year}年 {lunar_month}月 {lunar_day} <span style="color: #fff; font-size: 0.8em; background-color: #333; padding: 2px 8px; border-radius: 10px; margin-left: 5px;">屬{zodiac}</span>
-                </div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        cols = st.columns(4)
-        for i, (title, gan_char, zhi_char) in enumerate(pillars_data):
-            gan_wx = wuxing_map.get(gan_char, "")
-            zhi_wx = wuxing_map.get(zhi_char, "")
-            with cols[i]:
-                st.markdown(f"**{title}**")
-                st.markdown(f"<h2 style='text-align: center; color: {colors.get(gan_wx, 'black')}'>{gan_char}</h2>", unsafe_allow_html=True)
-                st.markdown(f"<h2 style='text-align: center; color: {colors.get(zhi_wx, 'black')}'>{zhi_char}</h2>", unsafe_allow_html=True)
-                st.caption(f"{gan_wx} / {zhi_wx}")
-                
-        # 2. 五行圖表 (需要 pandas)
-        st.subheader("📊 原廠零件庫存清單 (五行能量)")
-        counts = {"金": 0, "木": 0, "水": 0, "火": 0, "土": 0}
-        all_chars = [p[1] for p in pillars_data] + [p[2] for p in pillars_data]
-        total_chars = 8
-        for char in all_chars:
-            wx = wuxing_map.get(char)
-            if wx in counts:
-                counts[wx] += 1
-        data = []
-        for wx, count in counts.items():
-            percentage = (count / total_chars) * 100
-            label = f"{count} ({percentage:.0f}%)"
-            data.append({"五行": wx, "數量": count, "標籤": label})
-        df = pd.DataFrame(data)
-        base = alt.Chart(df).encode(
-            x=alt.X('五行', axis=alt.Axis(labelAngle=0, title="五行屬性")),
-            y=alt.Y('數量', axis=alt.Axis(title="數量 (個)", titleAngle=0, titleY=-10)),
-            color=alt.Color('五行', scale=alt.Scale(domain=['金', '木', '水', '火', '土'], range=['#FFD700', '#228B22', '#1E90FF', '#FF4500', '#8B4513']))
-        )
-        bars = base.mark_bar()
-        text = base.mark_text(align='center', baseline='bottom', dy=-5, fontSize=14).encode(text='標籤')
-        st.altair_chart((bars + text), use_container_width=True)
+👤 駕駛代號：{display_name}
+{trad_term}
+🏎️ 原廠車型：{car_name}
+⚙️ 引擎規格：{spec_cc}
+🔥 2026路況：{advice_2026[:20]}...
 
-        # 3. 喜忌神
-        st.subheader("💡 能量調節建議")
-        c1, c2 = st.columns(2)
-        with c1:
-            st.markdown(f"""
-            <div class="result-card" style="border-left: 5px solid #4CAF50;">
-                <h4 style="color: #4CAF50; margin:0;">⛽ 建議添加 (喜用)</h4>
-                <p style="font-size: 1.2em; font-weight: bold; margin: 10px 0;">{'、'.join(joyful_gods)}</p>
-            </div>
-            """, unsafe_allow_html=True)
-        with c2:
-            st.markdown(f"""
-            <div class="result-card" style="border-left: 5px solid #F44336;">
-                <h4 style="color: #F44336; margin:0;">⛔ 避免積碳 (忌神)</h4>
-                <p style="font-size: 1.2em; font-weight: bold; margin: 10px 0;">{'、'.join(taboo_gods)}</p>
-            </div>
-            """, unsafe_allow_html=True)
+你的原廠設定是坦克還是跑車？
+👇 點擊連結，立刻進廠鑑定：
+https://aliverse-bazi.streamlit.app"""
 
-        # 4. 2026 運勢
-        st.subheader("🔥 2026 (丙午年) 路況預報")
-        st.markdown(f"""
-        <div style="background-color: rgba(255, 69, 0, 0.1); padding: 20px; border-radius: 10px; border: 1px solid {border_2026};">
-            <h4 style="color: #FF4500; margin-top: 0;">{icon} 2026 火馬年路況</h4>
-            <p style="font-size: 1.1em; line-height: 1.6;">{advice_2026}</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # 5. 下載按鈕
-        st.write("---")
-        full_report = f"""
-【AliVerse 愛力宇宙 - 完整車檢報告書】
+    st.info("👇 複製下方文字，分享到 Line 或 IG，看看誰的車最猛！")
+    st.code(share_text, language="text")
+    
+    # 下載內容
+    report_content = f"""
+【AliVerse 愛力宇宙 - 原廠車型鑑定報告】
 ------------------------------------
-駕駛員：{display_name}
-命理格局：{trad_term}
-原廠車型：{car_name}
-核心能量指數：{score}%
+駕駛：{display_name}
+{trad_term}
+車型：{car_name}
+能量：{score}%
 ------------------------------------
 【車型圖騰】
 {ascii_art}
@@ -678,29 +533,25 @@ if st.session_state['analyzed']:
 引擎：{spec_cc}
 進氣：{spec_intake}
 油耗：{spec_fuel}
-改裝建議：{spec_mod}
+改裝：{spec_mod}
 ------------------------------------
-【性能深度分析】
+【性能分析】
 {car_desc}
 ------------------------------------
-【能量優化方案】
-建議添加 (喜用神)：{'、'.join(joyful_gods)}
+【油品建議】
+建議添加 (喜用)：{'、'.join(joyful_gods)}
 避免使用 (忌神)：{'、'.join(taboo_gods)}
 ------------------------------------
-【2026 丙午年路況預報】
+【2026 路況預報】
 {advice_2026}
 ------------------------------------
-感謝您的使用！
-AliVerse 愛力宇宙 - 科技命理．生命載具調校專家
-官方網站：https://aliverse-bazi.streamlit.app
+AliVerse 愛力宇宙
+https://aliverse-bazi.streamlit.app
 """
-        st.download_button(
-            label="📥 下載 PDF 報告",
-            data=full_report.encode('utf-8-sig'),
-            file_name=f"AliVerse_{display_name}_完整車檢報告.txt",
-            mime="text/plain",
-            type="primary"
-        )
-
-    elif user_code:
-        st.error("⛔ 密碼錯誤，請確認 LINE 官方帳號的最新公告。")
+    
+    st.download_button(
+        label="📥 下載完整車檢報告 (txt)",
+        data=report_content.encode('utf-8-sig'),
+        file_name=f"AliVerse_{display_name}_車檢報告.txt",
+        mime="text/plain"
+    )
