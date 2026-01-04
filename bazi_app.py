@@ -10,7 +10,7 @@ import textwrap
 import re
 import streamlit.components.v1 as components
 
-# --- 1. 網頁設定 (V44.0 完美導航版) ---
+# --- 1. 網頁設定 (V50.0 旗艦整合版) ---
 st.set_page_config(
     page_title="AliVerse 八字五行分析 - 2026運勢免費測 | 原廠車型鑑定",
     page_icon="🏎️",
@@ -196,6 +196,43 @@ st.markdown("""
         padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px; line-height: 1.8;
     }
 
+    /* AliVerse Matrix Style */
+    .matrix-box {
+        background: linear-gradient(145deg, #1a1a1a, #252525);
+        border: 1px solid #444; border-radius: 15px; padding: 20px;
+        margin-top: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .hex-symbol {
+        font-size: 50px; color: #fff; line-height: 0.8; text-align: center;
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.5); margin-bottom: 10px;
+    }
+    .matrix-item {
+        margin-bottom: 15px; padding: 10px 15px;
+        background: rgba(255,255,255,0.03); border-left: 3px solid #ffd700;
+        border-radius: 0 8px 8px 0;
+    }
+    .matrix-item h4 { margin: 0 0 5px 0; color: #81ecec; font-size: 1em; }
+    .matrix-item p { margin: 0; font-size: 0.95em; color: #ccc; }
+    .matrix-tags span {
+        display: inline-block; background: #333; color: #fff;
+        padding: 2px 6px; border-radius: 3px; font-size: 0.8em;
+        margin-right: 5px; margin-top: 5px; border: 1px solid #555;
+    }
+
+    /* Bridge Section Style */
+    .bridge-box {
+        background-color: rgba(255, 75, 75, 0.1);
+        border: 1px dashed #FF4B4B;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        margin: 30px 0;
+        position: relative;
+    }
+    .bridge-title { color: #FF4500; font-weight: bold; font-size: 1.2em; margin-bottom: 10px; }
+    .bridge-arrow { font-size: 2em; color: #FFD700; margin: 10px 0; animation: bounce 2s infinite; }
+    .bridge-text { color: #ddd; font-size: 0.95em; line-height: 1.6; }
+
     /* 籤詩動畫區 */
     .divination-box {
         text-align: center; padding: 30px; background-color: rgba(255,0,0,0.1);
@@ -246,17 +283,16 @@ with st.sidebar:
     st.link_button("💬 加入 LINE 官方帳號", "https://lin.ee/3woTmES")
     st.markdown("---")
     st.markdown("### 📢 系統公告")
-    st.success("✅ 目前版本：V44.0 (完美導航版)")
+    st.success("✅ 目前版本：V50.0 (旗艦整合版)")
     with st.expander("📜 點此查看版本更新軌跡"):
         st.markdown("""
-        **V44.0 (完美導航)**
-        - 🕹️ 導入自動捲動導航 (Auto-Scroll)
-        - 👤 優化駕駛員靈魂設定文案
-        - 🧬 全流程體驗整合
-
-        **V42.0 (絲滑體驗)**
-        - ⛩️ 卜卦輸入優化
-        - 💚 LINE 分享按鈕
+        **V50.0 (旗艦整合)**
+        - 🎨 智能關鍵字著色：文案中的五行與顏色自動高亮，視覺更直觀。
+        - 🔗 改裝戰略整合：將「車相建議」與「流年運勢」結合，提供明確的行動目的。
+        - 🎯 目的導向文案：清楚解釋「為什麼要這樣改」。
+        
+        **V49.0 (完美轉折)**
+        - 🌉 新增「技師總監診斷」：作為原廠規格與改裝方案的過渡橋樑。
         """)
     st.markdown("---")
     st.markdown("© 2026 AliVerse")
@@ -314,6 +350,37 @@ COLOR_MAP = {
     "水": "#2196F3"  # 藍
 }
 
+# [V50.0 New] 智能關鍵字著色引擎
+def highlight_keywords(text):
+    """
+    自動偵測文案中的五行、顏色等關鍵字，並套用對應的 HTML 顏色樣式。
+    """
+    keyword_colors = {
+        # 五行
+        "木": "#4CAF50", "火": "#FF5252", "土": "#FFC107", "金": "#E0E0E0", "水": "#2196F3",
+        # 顏色 (Wood)
+        "綠": "#4CAF50", "青": "#4CAF50", "藍綠": "#20B2AA",
+        # 顏色 (Fire)
+        "紅": "#FF5252", "紫": "#E040FB", "粉": "#FF80AB", "橘": "#FF6E40", "亮橘": "#FF6E40",
+        # 顏色 (Earth)
+        "黃": "#FFD700", "棕": "#8D6E63", "咖啡": "#8D6E63", "米": "#FFE082", "卡其": "#FFE082",
+        # 顏色 (Metal)
+        "白": "#FFFFFF", "銀": "#E0E0E0", "金": "#FFD700", "灰": "#9E9E9E",
+        # 顏色 (Water)
+        "黑": "#90A4AE", "藍": "#2196F3", "深藍": "#1565C0",
+        # 特殊材質
+        "碳纖維": "#B0BEC5", "麂皮": "#FF8A65", "實木": "#D7CCC8"
+    }
+    
+    # 進行替換 (使用正則表達式避免重複替換標籤內的字)
+    for kw, color in keyword_colors.items():
+        # 簡單替換 (注意：這裡簡化處理，若有關鍵字重疊可能需更複雜邏輯)
+        # 為了避免替換掉 HTML tag 裡面的字，我們只替換那些沒有被 < > 包圍的字，但這裡用簡單 replace
+        # 技巧：先檢查是否已經被 span 包裹 (這裡暫略，假設輸入純文字)
+        text = text.replace(kw, f"<span style='color:{color}; font-weight:bold;'>{kw}</span>")
+    
+    return text
+
 def get_colored_text(elements_list):
     html_str = ""
     for el in elements_list:
@@ -321,7 +388,7 @@ def get_colored_text(elements_list):
         html_str += f"<span style='color:{color}; font-weight:bold; margin-right:3px;'>{el}</span>"
     return html_str
 
-# 自動將文字中的五行關鍵字上色
+# 舊的簡易上色函式 (保留相容性)
 def highlight_text_elements(text):
     for char, color in COLOR_MAP.items():
         text = text.replace(char, f"<span style='color:{color}; font-weight:bold;'>{char}</span>")
@@ -359,6 +426,134 @@ def get_hidden_stems(branch):
         "申": ["庚", "壬", "戊"], "酉": ["辛"], "戌": ["戊", "辛", "丁"], "亥": ["壬", "甲"]
     }
     return hidden_map.get(branch, [])
+
+# ==========================================
+# [Logic] 全系統喜忌神同步判定邏輯 (含專家覆寫)
+# ==========================================
+def determine_fates_guide(day_master, month_idx):
+    """
+    根據日主與出生月，決定【喜用神】與【忌神】
+    expert_override: 針對特定格局 (如 Ali 的壬水酉月) 給予精準建議
+    return: (joyful_list, taboo_list, description)
+    """
+    joyful = []
+    taboo = []
+    reason = ""
+
+    # [Expert Override] 針對 Ali (壬水日主，秋天金旺)
+    if day_master == "水" and month_idx in [7, 8, 9, 10]:
+        joyful = ["火", "木"]
+        taboo = ["金", "水"]
+        reason = "格局金水過旺，能量急需釋放。喜用【火、木】，需要火來煉金成器（財星壞印），木來輸出才華（食傷洩秀）。忌【金、水】，引擎本體已過強，不需再加重負擔。"
+        return joyful, taboo, reason
+    
+    if day_master == "水" and month_idx in [11, 12, 1]: # 冬天水
+        joyful = ["火", "木"]
+        taboo = ["水", "金"]
+        reason = "生於隆冬，水寒金冷。首重【火】來調候溫暖，喜【木】來順生。忌金水過旺導致結冰不動。"
+        return joyful, taboo, reason
+
+    # [General Fallback] 簡易季節判斷
+    if 2 <= month_idx <= 4: # 春
+        if day_master in ["木", "火"]: joyful = ["金", "土"]; taboo = ["木", "火"]
+        else: joyful = ["土", "金"]; taboo = ["木", "水"]
+    elif 5 <= month_idx <= 7: # 夏
+        if day_master in ["火", "土"]: joyful = ["水", "金"]; taboo = ["火", "木"]
+        else: joyful = ["木", "火"] if day_master!="水" else ["金","水"]; taboo = ["金","水"] if day_master!="水" else ["火","土"]
+    elif 8 <= month_idx <= 10: # 秋
+        if day_master in ["金", "水"]: joyful = ["火", "木"]; taboo = ["金", "土"]
+        else: joyful = ["土", "金"]; taboo = ["火", "木"]
+    else: # 冬
+        if day_master in ["水", "木"]: joyful = ["火", "土"]; taboo = ["水", "金"]
+        else: joyful = ["金", "水"]; taboo = ["火", "土"]
+            
+    if not joyful: joyful = ["火", "木"]; taboo = ["金", "水"]; reason = "能量平衡建議：喜火木，忌金水。"
+        
+    return joyful, taboo, reason
+
+
+# ==========================================
+# [V50.0] AliVerse 64卦車相矩陣核心引擎 (含目的性文案)
+# ==========================================
+def get_aliverse_car_matrix(day_master, lucky_element):
+    # 1. 八卦定義資料庫
+    trigrams = {
+        '乾': {'name': '乾', 'nature': '天', 'symbol': '☰', 'style': '旗艦豪華轎車 / 超跑', 'color': '金屬銀、珍珠白、香檳金', 'engine': 'V8/V12 大排量自然進氣', 'vibe': '尊貴、領袖氣場、經典', 'part': '金'},
+        '兌': {'name': '兌', 'nature': '澤', 'symbol': '☱', 'style': '雙門 Coupe / 敞篷車', 'color': '白色、杏色、淺灰', 'engine': '精緻小排量 / 油電混合', 'vibe': '享樂、時尚、拉風', 'part': '金'},
+        '離': {'name': '離', 'nature': '火', 'symbol': '☲', 'style': '流線性能跑車', 'color': '法拉利紅、亮紫、亮橘', 'engine': '高轉速 NA / 電子輔助強', 'vibe': '熱情、吸睛、速度', 'part': '火'},
+        '震': {'name': '震', 'nature': '雷', 'symbol': '☳', 'style': '重改裝車 / 美式肌肉車', 'color': '賽車綠、青色、賽車塗裝', 'engine': '大渦輪增壓 (Turbo)', 'vibe': '爆發力、貼背感、震撼', 'part': '木'},
+        '巽': {'name': '巽', 'nature': '風', 'symbol': '☴', 'style': '流線旅行車 / 掀背鋼砲', 'color': '消光黑、藍綠、變色龍', 'engine': '雙渦輪 / 空氣力學優化', 'vibe': '操控、靈活、高速', 'part': '木'},
+        '坎': {'name': '坎', 'nature': '水', 'symbol': '☵', 'style': '黑頭車 / 豪華房車', 'color': '深邃黑、午夜藍', 'engine': '水冷強化 / 智能駕駛系統', 'vibe': '深沉、智謀、流動', 'part': '水'},
+        '艮': {'name': '艮', 'nature': '山', 'symbol': '☶', 'style': '大型 SUV / G-Car / 皮卡', 'color': '土黃、咖啡、軍綠、水泥灰', 'engine': '柴油動力 / 大扭力四驅', 'vibe': '穩重、防禦、靠山', 'part': '土'},
+        '坤': {'name': '坤', 'nature': '地', 'symbol': '☷', 'style': '豪華 MPV / 保母車', 'color': '黃色、大地色、消光', 'engine': '平順動力 / 氣壓懸吊', 'vibe': '包容、承載、舒適', 'part': '土'}
+    }
+
+    # 2. 映射邏輯
+    dm_map = {'甲': '震', '乙': '巽', '丙': '離', '丁': '離', '戊': '艮', '己': '坤', '庚': '乾', '辛': '兌', '壬': '坎', '癸': '坎'}
+    lucky_map = {'木': '巽', '火': '離', '土': '艮', '金': '乾', '水': '坎'}
+
+    lower_key = dm_map.get(day_master, '乾')
+    upper_key = lucky_map.get(lucky_element, '離')
+    
+    lower = trigrams[lower_key]
+    upper = trigrams[upper_key]
+
+    # 3. 文案生成 (加入目的導向)
+    hexagram_name = f"{upper['nature']}{lower['nature']}卦"
+    
+    look_text = f"上卦為【{upper['name']} ({upper['nature']})】，這是能為您帶來平衡的「開運形象」。"
+    look_text += f" 由於您的本命磁場需要{upper['part']}來調和，建議外觀選擇 **{upper['style']}** 風格。"
+    look_text += f" 車色首選 **{upper['color']}**，**目的是轉化您原本的氣場，對外展現「{upper['vibe']}」的強大吸引力，吸引貴人目光**。"
+    
+    soul_text = f"下卦為【{lower['name']} ({lower['nature']})】，這代表您身為駕駛者的「原始靈魂」。"
+    soul_text += f" 您的日主為「{day_master}」，本質上具備 **{lower['engine']}** 的特性。"
+    soul_text += f" 雖然外表{upper['vibe']}，但您內在追求的是「{lower['vibe']}」的真實感受。"
+
+    tuning_text = ""
+    tuning_purpose = "" # 用於最後整合分析
+    
+    # 特殊判斷：Ali 的強金水喜火格局 (外火內水)
+    if (upper['nature'] == '火' and lower['nature'] == '水') or (upper['nature'] == '水' and lower['nature'] == '火'):
+         tuning_text = "這是一個「水火既濟」的完美平衡。您的本命金水過旺（容易給人冷冽、掉漆的感覺），因此**絕不能再選黑、白、銀色車**。"
+         tuning_text += " 建議透過**「火」**的能量來煉金：內裝大膽採用**紅色縫線、紅色安全帶或 Alcantara 麂皮**。改裝重點在於**排氣聲浪**（聲名大噪），**目的是用熱情的火來溫暖原本冰冷的金水引擎，防止運勢故障，並在事業彎道上展現「霸氣超車」的決心**。"
+         tuning_purpose = "透過火系改裝（紅色、聲浪）來「暖局煉金」，達成彎道超車與突破現狀的目的。"
+    
+    elif upper['part'] == lower['part']:
+        tuning_text = "上下卦五行氣場相同，能量極為純粹。**不建議過度改裝外觀**，應維持原廠的設計語彙。重點放在車內清潔與「氣味」管理，**目的是保持能量流通，讓思緒如光纖般清晰**。"
+        tuning_purpose = "維持原廠純粹能量，透過氣場管理來提升決策清晰度。"
+    
+    elif (upper['part'] == '火' and lower['part'] == '金') or (upper['part'] == '金' and lower['part'] == '木'):
+        tuning_text = "此卦象帶有「火煉金」或「金剋木」的張力，代表這台車能激發您的戰鬥力。建議升級**煞車系統 (Brembo 等)** 與 **抓地力強的輪胎**，**目的是強化您的「控制力」，讓您在高速衝刺事業時，依然能穩穩抓住機會**。"
+        tuning_purpose = "強化制動與抓地力，提升對局勢的掌控權。"
+    
+    else:
+        extra_material = "真皮" if lower['part'] == '土' else "碳纖維飾板"
+        tuning_text = f"這是一個相生的組合。因您的喜用神為{lucky_element}，建議在車身細節（如輪框蓋、後照鏡）點綴 **{upper['color']}**。內裝部分，建議多用{extra_material}，**目的是最大化五行相生的運勢，讓財運與貴人運源源不絕**。"
+        tuning_purpose = f"透過五行相生改裝，增強貴人運與財運的流動。"
+
+    verdict_text = f"經由 AliVerse 運算，您的專屬車相為【外{upper['nature']}內{lower['nature']}】。這台車是您「改運」的法器。"
+    verdict_text += f" 它利用 **{upper['nature']} ({upper['vibe']})** 的外在形象，來平衡您內在 **{lower['nature']} ({lower['vibe']})** 的過強能量，達到真正的陰陽調和。"
+
+    # 套用關鍵字上色
+    look_text = highlight_keywords(look_text)
+    soul_text = highlight_keywords(soul_text)
+    tuning_text = highlight_keywords(tuning_text)
+    verdict_text = highlight_keywords(verdict_text)
+
+    return {
+        "hex_name": hexagram_name,
+        "symbol_upper": upper['symbol'],
+        "symbol_lower": lower['symbol'],
+        "upper_desc": f"外觀(喜用)：{upper['name']} ({upper['nature']})",
+        "lower_desc": f"動力(本命)：{lower['name']} ({lower['nature']})",
+        "look_text": look_text,
+        "look_tags": [upper['style'], upper['color']],
+        "soul_text": soul_text,
+        "soul_tags": [lower['engine'], lower['vibe']],
+        "tuning_text": tuning_text,
+        "tuning_purpose": tuning_purpose, # 傳出目的，供最後整合使用
+        "verdict_text": verdict_text
+    }
 
 # --- 運算 ---
 if submit_btn:
@@ -425,54 +620,40 @@ if st.session_state['analyzed']:
         if char_wx == day_master_wx or char_wx == resource_wx:
             score += w
     
-    elements_order = ["木", "火", "土", "金", "水"]
-    idx = elements_order.index(day_master_wx)
-    peer = elements_order[idx] # 比劫
-    resource = elements_order[idx-1] # 印星
-    output = elements_order[(idx+1)%5] # 食傷
-    wealth = elements_order[(idx+2)%5] # 財星
-    officer = elements_order[(idx+3)%5] # 官殺
-    
+    # 計算格局分數
     strength_type = ""
-    god_reason = ""
-    soul_message = "" 
+    ascii_art = ""
+    base_type = ""
     
-    # [V40] 加上百分比顯示
     if score >= 85:
         strength_type = f"從強格 (特殊) {score}%"
         base_type = "🛡️ 重裝坦克"
         ascii_art = """   ░░░░░░░░░░░░░░░░░\n  ░░░░▄▄████▄▄░░░░░░\n  ░░░██████████░░░░░\n  ░▄▄████████████▄▄░\n  █  AliVerse Tank █\n  ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀"""
-        joyful_gods = [peer, resource] 
-        taboo_gods = [output, wealth, officer]
-        god_reason = f"格局特殊，能量極強。喜用【{peer}、{resource}】，如同坦克需要厚裝甲與燃料。"
         soul_message = f"親愛的 {day_master_wx} 行坦克駕駛：世界是用來征服的。但最強的履帶也需要潤滑，偶爾示弱不是輸，而是為了走更遠的路。"
     elif score > 45: 
         strength_type = f"身強 (Strong) {score}%"
         base_type = "🚜 全地形越野車"
         ascii_art = """      ____  \n     /  | \_ \n    |___|___\_\n    (o)----(o)\n   [ SUV-4WD ]"""
-        joyful_gods = [output, wealth, officer] 
-        taboo_gods = [peer, resource]
-        god_reason = f"引擎馬力充沛，需透過「輸出（{output}）」、「追求（{wealth}）」或「挑戰（{officer}）」來消耗過剩能量。"
         soul_message = f"親愛的 {day_master_wx} 行越野車駕駛：您的能量像座活火山，不給它出口（才華/事業），就會在內部爆炸。請大膽地去冒險，舒適圈是您的監獄。"
     elif score >= 15:
         strength_type = f"身弱 (Weak) {score}%"
         base_type = "🏎️ 經典跑車/房車"
         ascii_art = """      ______\n     /  |   \_\n    |___|_____\__\n    (o)-----(o)\n    [  SEDAN  ]"""
-        joyful_gods = [peer, resource]
-        taboo_gods = [output, wealth, officer]
-        god_reason = f"構造精密敏感。喜用【{peer}、{resource}】，適合組隊（比劫）和持續充電（印星）。"
         soul_message = f"親愛的 {day_master_wx} 行跑車駕駛：別羨慕坦克的耐撞，您的價值在於精準與優雅。這世界太吵，您需要的是懂您的副駕駛（夥伴）和高品質的保養（學習）。"
     else:
         strength_type = f"從弱格 (特殊) {score}%"
         base_type = "🛸 未來概念車"
         ascii_art = """      .---.\n    _/__~__\_\n   (_________)\n    /       \ \n   [   UFO   ]"""
-        joyful_gods = [output, wealth, officer]
-        taboo_gods = [peer, resource]
-        god_reason = f"極致適應力。喜用【{output}、{wealth}、{officer}】，順水推舟是您的生存哲學。"
         soul_message = f"親愛的 {day_master_wx} 行概念車駕駛：您是變色龍。不要被世俗的「自我」框架綁住。當您與趨勢合而為一，您就是趨勢本身。"
+
+    # ==========================================
+    # [V48.0 Upgrade] 使用新函數同步喜忌神
+    # ==========================================
+    joyful_gods, taboo_gods, god_reason = determine_fates_guide(day_master_wx, int(inp_month))
 
     # 提早定義顏色與運勢
     factory_color_hex = COLOR_MAP.get(day_master_wx, "#888")
+    
     lucky_colors_list = [color_dict['name'] for wx in joyful_gods for name, color_dict in {'木':{'name':'叢林綠'}, '火':{'name':'法拉利紅'}, '土':{'name':'大地棕'}, '金':{'name':'鈦金銀'}, '水':{'name':'深海藍'}}.items() if name == wx]
     taboo_colors_list = [color_dict['name'] for wx in taboo_gods for name, color_dict in {'木':{'name':'叢林綠'}, '火':{'name':'法拉利紅'}, '土':{'name':'大地棕'}, '金':{'name':'鈦金銀'}, '水':{'name':'深海藍'}}.items() if name == wx]
     
@@ -549,7 +730,8 @@ if st.session_state['analyzed']:
         scroll_to('result-anchor')
         st.session_state['do_scroll_to'] = None # 重置訊號
 
-    st.subheader("🏎️ 原廠檢測報告")
+    # [V49] 步驟一：原廠規格
+    st.subheader("🏎️ 步驟一：原廠出廠規格 (Original Spec)")
     
     car_card_html = (
         f'<div style="padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border: 2px solid {factory_color_hex}; background-color: rgba(0,0,0,0.3);">'
@@ -565,6 +747,29 @@ if st.session_state['analyzed']:
         f'</div>'
     )
     st.markdown(car_card_html, unsafe_allow_html=True)
+
+    # =======================================================
+    # [V49] 橋樑：技師總監的改裝診斷 (The Bridge)
+    # =======================================================
+    taboo_str = "、".join(taboo_gods)
+    joyful_str = "、".join(joyful_gods)
+    
+    diagnosis_html = f"""
+    <div class="bridge-box">
+        <div class="bridge-title">🔧 技師總監的改裝診斷</div>
+        <div class="bridge-text">
+            檢測報告顯示，您的原廠設定（本命）中，{highlight_keywords(taboo_str)} 能量過高。<br>
+            若維持原廠設定上路，容易出現動力遲滯（運勢受阻）或機件過冷（人際冷淡）。<br>
+            <br>
+            <b>👨‍🔧 解決方案：</b><br>
+            我們批准了一套 <b>【{highlight_keywords(joyful_str)}系】</b> 的空力套件與塗裝升級。<br>
+            這不是為了改變您的本質，而是為了<b>平衡</b>，讓您跑得更順、更穩！
+        </div>
+        <div class="bridge-arrow">⬇</div>
+    </div>
+    """
+    st.markdown(diagnosis_html, unsafe_allow_html=True)
+    # =======================================================
 
     # --- 鎖定區域 (色彩行銷文案) ---
     st.write("---")
@@ -670,8 +875,8 @@ if st.session_state['analyzed']:
         # 2. 靈魂導航
         st.write("---")
         st.subheader("🧠 引擎調校與靈魂導航")
-        colored_soul_message = highlight_text_elements(soul_message)
-        colored_god_reason = highlight_text_elements(god_reason)
+        colored_soul_message = highlight_keywords(soul_message)
+        colored_god_reason = highlight_keywords(god_reason)
         st.markdown(f"""<div class="soul-message">{colored_soul_message}</div>""", unsafe_allow_html=True)
         st.markdown(f"""<div class="deep-dive-box"><b>🔧 技師診斷書 (格局分析)：</b><br>{colored_god_reason}</div>""", unsafe_allow_html=True)
 
@@ -714,6 +919,60 @@ if st.session_state['analyzed']:
         col_chart1, col_chart2 = st.columns(2)
         with col_chart1: st.altair_chart(chart_pie, use_container_width=True)
         with col_chart2: st.altair_chart(chart_bar, use_container_width=True)
+
+        # ----------------------------------------------------
+        # [AliVerse] 64卦車相矩陣顯示區
+        # ----------------------------------------------------
+        st.write("---")
+        
+        # [V49] 步驟二：改裝方案
+        st.subheader("🔧 步驟二：AliVerse 傳說改裝廠 (Custom Tuning)")
+        
+        # 使用同步判定好的 joyful_gods[0] (第一喜用神)
+        primary_lucky = joyful_gods[0]
+        matrix_data = get_aliverse_car_matrix(day_gan, primary_lucky)
+
+        st.markdown(f"<h3 style='text-align: center; color: #ffd700; margin-bottom: 20px;'>AliVerse 64卦車相矩陣：{matrix_data['hex_name']}</h3>", unsafe_allow_html=True)
+
+        # 顯示卦象符號與架構
+        c_mat1, c_mat2, c_mat3 = st.columns([1, 3, 1])
+        with c_mat2:
+            st.markdown(f"""
+            <div style="text-align: center; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 15px;">
+                <div class="hex-symbol">{matrix_data['symbol_upper']}<br>{matrix_data['symbol_lower']}</div>
+                <div style="color: #aaa; font-size: 0.9em; letter-spacing: 1px;">
+                    {matrix_data['upper_desc']} <span style="color:#ff4757; margin:0 5px;">×</span> {matrix_data['lower_desc']}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        # 顯示矩陣詳細內容
+        st.markdown(f"""
+        <div class="matrix-box">
+            <div class="matrix-item">
+                <h4><i class="fas fa-car"></i> 經典車型畫像 (The Look)</h4>
+                <p>{matrix_data['look_text']}</p>
+                <div class="matrix-tags"><span>{matrix_data['look_tags'][0]}</span><span>{matrix_data['look_tags'][1]}</span></div>
+            </div>
+            <div class="matrix-item">
+                <h4><i class="fas fa-cogs"></i> 引擎與性能靈魂 (The Soul)</h4>
+                <p>{matrix_data['soul_text']}</p>
+                <div class="matrix-tags"><span>{matrix_data['soul_tags'][0]}</span><span>{matrix_data['soul_tags'][1]}</span></div>
+            </div>
+            <div class="matrix-item">
+                <h4><i class="fas fa-wrench"></i> AliVerse 改裝特調 (The Tuning)</h4>
+                <p style="color: #ffd700;">{matrix_data['tuning_text']}</p>
+            </div>
+            <div class="matrix-item" style="border-left-color: #ff4757; background: rgba(255, 71, 87, 0.08);">
+                <h4><i class="fas fa-bolt"></i> 運勢總評 (The Verdict)</h4>
+                <p>{matrix_data['verdict_text']}</p>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # ----------------------------------------------------
+        # [END] AliVerse 64卦車相矩陣
+        # ----------------------------------------------------
 
         # 4. 互動式時空卜卦
         st.write("---")
@@ -792,17 +1051,24 @@ if st.session_state['analyzed']:
             </div>
             """, unsafe_allow_html=True)
             
-            # 綜合療癒運勢解析
+            # [V50.0] 綜合療癒運勢解析 (整合改裝建議)
             final_advice = f"""
             嘿，<b>{real_car_model}</b> 的車主！<br><br>
             今年是<b>丙午火馬年</b>，對於你這台 <b>{base_type}</b> 來說，路況是「火力全開」的賽道。<br>
             因為你的引擎（日主 {get_colored_text([day_master_wx])}）{('喜火，這簡直是你的主場，油門踩到底就對了！') if '火' in joyful_gods else ('忌火，這代表引擎容易過熱，請務必安裝「水冷系統」（冷靜/休息）。')}<br><br>
+            
+            <b>🛡️ 改裝戰略整合：</b><br>
+            {matrix_data['tuning_purpose']}<br><br>
+            
             加上你剛剛抽到的<b>「{gua_name}」</b>卦象，顯示你潛意識中渴望<b>{('突破與展現') if '火' in gua_name or '天' in gua_name else ('穩定與積累')}</b>。<br><br>
             👉 <b>全方位能量補給建議：</b><br>
             建議您在 <b>食衣住行育樂</b> 中，多<b>補充和添加</b>您的幸運燃料：<b>{lucky_html}</b>。<br>
-            同時要刻意避開 <b>{taboo_html}</b> 能量，以免產生不必要的 <span style='color:#FF5252; font-weight:bold;'>能量壓力</span> 與 <span style='color:#FF5252; font-weight:bold;'>精神內耗</span>。<br><br>
+            同時要刻意避開 <b>{taboo_html}</b> 能量，以免產生不必要的 {highlight_keywords('能量壓力')} 與 {highlight_keywords('精神內耗')}。<br><br>
             祝你在 2026 的賽道上，不僅跑得快，還能帥氣過彎，安全抵達終點！🚗💨
             """
+            
+            # 應用高亮 (確保最終輸出也有顏色)
+            final_advice = highlight_keywords(final_advice)
             
             st.markdown(f"""
             <div style="background-color: rgba(255, 69, 0, 0.1); padding: 20px; border-radius: 10px; border: 1px solid #FFD700; margin-top: 20px;">
@@ -821,6 +1087,7 @@ if st.session_state['analyzed']:
 日主本命：{day_gan}{day_master_wx}
 原廠車型：{real_car_model} ({base_type})
 能量規格：{strength_type} (指數 {score}%)
+專屬車相：{matrix_data['hex_name']} (外{matrix_data['upper_desc'].split('：')[1]} 內{matrix_data['lower_desc'].split('：')[1]})
 ================================
 【時空占卜紀錄】
 占卜時間：{time_ganzhi}
@@ -837,6 +1104,7 @@ if st.session_state['analyzed']:
 【幸運改裝方案】
 幸運燃料：{'、'.join(lucky_colors_list)}
 避凶警示：{'、'.join(taboo_colors_list)}
+改裝戰略：{matrix_data['tuning_purpose']}
 ================================
 AliVerse 愛力宇宙 - 科技命理
 立即測算：https://aliverse-bazi.streamlit.app
@@ -850,7 +1118,7 @@ AliVerse 愛力宇宙 - 科技命理
                     mime="text/plain"
                 )
             
-            fun_share_text = f"🏎️ 我剛剛在 AliVerse 測出來，我是 {real_car_model}！\n易經卜卦抽到「{gua_name}」，說我 2026 年要{'火力全開' if '火' in joyful_gods else '注意過熱'}！\n你也來測測看你是什麼車？\n👉 https://aliverse-bazi.streamlit.app"
+            fun_share_text = f"🏎️ 我剛剛在 AliVerse 測出來，我是 {real_car_model}！\n車相矩陣顯示是「{matrix_data['hex_name']}」！\n易經卜卦說我 2026 年要{'火力全開' if '火' in joyful_gods else '注意過熱'}！\n你也來測測看你是什麼車？\n👉 https://aliverse-bazi.streamlit.app"
             
             st.info("👇 點擊右上角複製按鈕，分享到 IG/LINE：")
             st.code(fun_share_text, language="text")
