@@ -7,7 +7,7 @@ import time
 import random
 import urllib.parse
 
-# --- 1. 網頁設定 (V25.0 側邊欄優化版) ---
+# --- 1. 網頁設定 (V27.0 視覺導引增強版) ---
 st.set_page_config(
     page_title="AliVerse 八字五行分析 - 2026運勢免費測 | 原廠車型鑑定",
     page_icon="🏎️",
@@ -24,10 +24,10 @@ st.set_page_config(
     }
 )
 
-# 定義解鎖密碼
-UNLOCK_CODE = "ALI888"
+# === V26.0 雙密碼設定 ===
+VALID_CODES = ["ALI888", "17888"]
 
-# --- 2. CSS 樣式美化 ---
+# --- 2. CSS 樣式美化 (新增導引特效) ---
 st.markdown("""
     <style>
     body { font-family: '微軟正黑體', sans-serif; }
@@ -40,6 +40,51 @@ st.markdown("""
     #MainMenu { display: inline-block !important; }
     [data-testid="stStatusWidget"] { display: none !important; }
     
+    /* === [V27.0 新增] 側邊欄按鈕呼吸燈特效 === */
+    [data-testid="stSidebarCollapsedControl"] {
+        animation: glowing 2s infinite;
+        border-radius: 50%;
+        border: 2px solid #FFD700;
+        box-shadow: 0 0 10px #FFD700;
+        background-color: rgba(0,0,0,0.5);
+        color: #FFD700 !important;
+    }
+    
+    @keyframes glowing {
+        0% { box-shadow: 0 0 5px #FFD700; transform: scale(1); }
+        50% { box-shadow: 0 0 20px #FF4B4B; transform: scale(1.1); }
+        100% { box-shadow: 0 0 5px #FFD700; transform: scale(1); }
+    }
+
+    /* === [V27.0 新增] 浮動指引文字 (手機版超明顯) === */
+    .sidebar-hint {
+        position: fixed;
+        top: 60px; /* 在選單按鈕下方 */
+        left: 10px;
+        z-index: 999999;
+        background-color: #FF4B4B;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 12px;
+        font-weight: bold;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        animation: bounce 1.5s infinite;
+        pointer-events: none; /* 讓點擊穿透，不會擋到按鈕 */
+    }
+    .sidebar-hint::before {
+        content: "▲";
+        position: absolute;
+        top: -12px;
+        left: 10px;
+        color: #FF4B4B;
+        font-size: 14px;
+    }
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
+    }
+
     /* Hero Banner */
     .hero-container {
         background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
@@ -285,7 +330,16 @@ st.markdown("""
         border-bottom: 1px solid #fff;
     }
     </style>
+    
+    <div class="sidebar-hint">
+        👈 點此開啟駕駛艙 (商城/客服)
+    </div>
     """, unsafe_allow_html=True)
+
+# === [V27.0 新增] 進站系統廣播 (Toast) ===
+if 'toast_shown' not in st.session_state:
+    st.toast('👋 歡迎來到 AliVerse！點擊左上角「>」開啟駕駛艙，領取您的開運裝備。', icon='🏎️')
+    st.session_state['toast_shown'] = True
 
 # === [V25.0 更新] 側邊欄設定 ===
 with st.sidebar:
@@ -297,46 +351,31 @@ with st.sidebar:
     
     st.markdown("---")
     
-    # 2. 社群與客服 (分組)
+    # 2. 社群與客服
     st.markdown("**📡 訊號連結**")
     st.link_button("📺 觀看 YouTube 頻道", "https://www.youtube.com/@Ali_Universe") 
     st.link_button("💬 加入 LINE 官方帳號", "https://lin.ee/3woTmES")
-    
-    # [未來預留] 您可以在這裡加入 IG 和 FB，建議使用 st.columns 並排，比較省空間
-    # col_social_1, col_social_2 = st.columns(2)
-    # with col_social_1:
-    #     st.link_button("📸 IG", "您的IG連結")
-    # with col_social_2:
-    #     st.link_button("📘 FB", "您的FB連結")
     
     st.markdown("---")
     
     # 3. 歷史軌跡
     st.markdown("### 📢 系統公告")
-    st.success("✅ 目前版本：V25.0 (最新)")
+    st.success("✅ 目前版本：V27.0 (最新)")
     
     with st.expander("📜 點此查看版本更新軌跡"):
         st.markdown("""
+        **V27.0 (視覺導引)**
+        - ✨ 左上角選單新增「呼吸燈」特效
+        - 👈 新增「浮動指引文字」提示側邊欄
+        - 🍞 進站即時廣播通知 (Toast)
+
+        **V26.0 (體驗優化)**
+        - 🔐 升級雙密碼解鎖 (17888 / ALI888)
+        - 📱 優化 LINE 導引指令為 "888"
+
         **V25.0 (介面優化)**
         - 🛒 側邊欄連結重組與文案更新
         - 📢 支援未來多社群平台擴充
-
-        **V20.0 - V24.0 (流量與變現)**
-        - 🚀 完成 SEO 搜尋引擎優化
-        - 🔗 串接 Fourthwall 商城贊助
-        - 💬 整合 LINE/YouTube 客服系統
-        - 📊 戰情室級別雙圖表 (色彩對齊)
-
-        **V18.0 (核心運算升級)**
-        - 🧠 導入 45% 身強身弱判斷邏輯
-        - 🔍 新增地支刑沖合害深度掃描
-        - ⚡ 十神配置運算引擎
-
-        **V10.0 - V17.0 (使用者體驗)**
-        - 🎨 繁體中文語系全面優化
-        - 🏎️ HUD 儀表板開場動畫
-        - 🔐 VIP 權限密碼鎖功能
-        - 📤 社交裂變分享按鈕 (LINE/IG)
         """)
         st.caption("感謝您一路以來的支持！")
     
@@ -485,7 +524,7 @@ if st.session_state['analyzed']:
     ascii_art = ""
     trad_term = ""
     
-    # === 身強身弱邏輯 (V18.0) ===
+    # === 身強身弱邏輯 ===
     if score >= 85:
         trad_term = "命理格局：從強格 (特殊專旺)"
         car_name = "🛡️ 陸地航母：重裝坦克"
@@ -656,7 +695,7 @@ if st.session_state['analyzed']:
 </div>"""
     st.markdown(html_content, unsafe_allow_html=True)
 
-    # === 上鎖區域 ===
+    # === 上鎖區域 (V26.0 修改提示文字) ===
     st.write("---")
     st.markdown("""
     <div class="lock-box">
@@ -664,7 +703,7 @@ if st.session_state['analyzed']:
         <div class="lock-desc">
             想要查看 <b>2026流年運勢</b>、<b>八字能量圖表</b> 與 <b>幸運能量建議</b>？<br><br>
             1. <a href="https://lin.ee/3woTmES" target="_blank" class="line-link">👉 點此加入 LINE 官方帳號</a><br>
-            2. 輸入關鍵字<b>『report』</b>獲取通關密碼<br>
+            2. 輸入關鍵字<b>『888』</b>獲取通關密碼<br>
             3. 在下方輸入密碼，立即解鎖分析
         </div>
     </div>
@@ -674,8 +713,8 @@ if st.session_state['analyzed']:
     with c_lock2:
         user_code = st.text_input("🔑 輸入解鎖碼", placeholder="在此輸入密碼...", label_visibility="collapsed")
     
-    # === 解鎖後顯示區域 ===
-    if user_code == UNLOCK_CODE:
+    # === 解鎖後顯示區域 (V26.0 修改判斷邏輯) ===
+    if user_code in VALID_CODES:
         with st.spinner("🔄 正在驗證金鑰... 連線資料庫中..."):
             time.sleep(1.5)
         st.success("✅ 權限解鎖成功！")
