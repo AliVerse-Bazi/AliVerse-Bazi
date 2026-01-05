@@ -10,7 +10,7 @@ import textwrap
 import re
 import streamlit.components.v1 as components
 
-# --- 1. 網頁設定 (V54.0 最終精準分離版) ---
+# --- 1. 網頁設定 (V55.0 功能保留・介面復原版) ---
 st.set_page_config(
     page_title="AliVerse 八字五行分析 - 2026運勢免費測 | 原廠車型鑑定",
     page_icon="🏎️",
@@ -50,102 +50,35 @@ def scroll_to(target_id):
 if 'scroll_target' not in st.session_state:
     st.session_state['scroll_target'] = None
 
-# --- 2. CSS 樣式美化 (V54.0 重寫版) ---
+# --- 2. CSS 樣式美化 (已移除強制隱藏 UI 的代碼，保留美觀樣式) ---
 st.markdown("""
     <style>
     body { font-family: '微軟正黑體', sans-serif; }
     
-    /* ================================================================= */
-    /* === [V54.0] 修正策略：保留 Header 結構，只殺內容 === */
-    /* ================================================================= */
-    
-    /* 1. 針對頂部 Header：保留它！但讓它變透明、隱形 */
-    header[data-testid="stHeader"] {
-        background-color: transparent !important;
-        border-bottom: none !important;
-    }
-    
-    /* 2. 針對 Header 的「裝飾彩條」：隱藏 */
-    [data-testid="stDecoration"] {
-        display: none !important;
-    }
-    
-    /* 3. 針對 Header 的「右側工具列」(Toolbar/Options/GitHub) */
-    /* 這是關鍵！我們只隱藏右邊，不動左邊 */
-    [data-testid="stToolbar"] {
-        display: none !important; 
-        visibility: hidden !important;
-    }
-    [data-testid="stHeaderActionElements"] {
-        display: none !important;
-    }
-    /* 針對可能殘留的右側按鈕容器 */
-    header[data-testid="stHeader"] > div:last-child {
-        display: none !important;
-    }
-
-    /* 4. 針對 Header 的「左側按鈕」(>>) */
-    /* 因為我們保留了 Header，所以這裡只要負責「上色」就好 */
+    /* 側邊欄呼吸燈 */
     [data-testid="stSidebarCollapsedControl"] {
-        display: block !important;
-        color: #FFD700 !important; /* 金色 */
-        background-color: rgba(20, 20, 30, 0.8) !important; /* 加個底色比較明顯 */
-        border: 1px solid #FFD700 !important;
-        border-radius: 50% !important;
-        /* 不用 position: fixed，讓它自然跟著 Header 走 */
+        animation: glowing 2s infinite;
+        border-radius: 50%;
+        border: 2px solid #FFD700;
+        box-shadow: 0 0 10px #FFD700;
+        background-color: rgba(0,0,0,0.5);
+        color: #FFD700 !important;
+    }
+    @keyframes glowing {
+        0% { box-shadow: 0 0 5px #FFD700; transform: scale(1); }
+        50% { box-shadow: 0 0 20px #FF4B4B; transform: scale(1.1); }
+        100% { box-shadow: 0 0 5px #FFD700; transform: scale(1); }
     }
     
-    /* 5. 針對底部 Footer (Hosted by Streamlit) */
-    footer {
-        display: none !important;
-        visibility: hidden !important;
-        height: 0px !important;
-    }
-    /* 暴力遮蓋法：如果 display:none 失效，我們用一個黑條蓋過去 */
-    .viewerFooter-root {
-        display: none !important;
-    }
-    /* 為了保險，把 footer 的文字顏色變成跟背景一樣 */
-    footer, footer a {
-        color: transparent !important;
-    }
-
-    /* 6. 調整頂部內容間距 */
-    /* 因為 Header 變透明了，內容可以稍微往上，但不要被按鈕擋住 */
-    .block-container {
-        padding-top: 3rem !important; 
-        padding-bottom: 5rem !important; 
-    }
-    
-    /* 7. 浮動指引文字 */
+    /* 浮動指引文字 */
     .sidebar-hint {
-        position: fixed; 
-        top: 60px; /* 配合按鈕位置 */
-        left: 10px; 
-        z-index: 999999;
-        background-color: #FF4B4B; 
-        color: white; 
-        padding: 5px 12px;
-        border-radius: 20px; 
-        font-size: 14px; 
-        font-weight: bold;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.5); 
-        animation: bounce 1.5s infinite;
+        position: fixed; top: 60px; left: 10px; z-index: 999999;
+        background-color: #FF4B4B; color: white; padding: 5px 10px;
+        border-radius: 15px; font-size: 12px; font-weight: bold;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3); animation: bounce 1.5s infinite;
         pointer-events: none;
     }
-    .sidebar-hint::before { 
-        content: "▲"; 
-        position: absolute; 
-        left: 15px; 
-        top: -12px;
-        color: #FF4B4B; 
-        font-size: 14px; 
-    }
-    
-    /* ================================================================= */
-
-    #MainMenu { display: none !important; }
-    
+    .sidebar-hint::before { content: "▲"; position: absolute; top: -12px; left: 10px; color: #FF4B4B; font-size: 14px; }
     @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
 
     /* Hero Banner */
@@ -319,7 +252,7 @@ st.markdown("""
     }
     @keyframes pulse-gold { from { opacity: 0.6; transform: scale(0.95); } to { opacity: 1; transform: scale(1.05); } }
     </style>
-    <div class="sidebar-hint">開啟駕駛艙 (商城/客服)</div>
+    <div class="sidebar-hint">👈 點此開啟駕駛艙 (商城/客服)</div>
     """, unsafe_allow_html=True)
 
 # === 進站廣播 ===
@@ -342,17 +275,16 @@ with st.sidebar:
     st.link_button("💬 加入 LINE 官方帳號", "https://lin.ee/3woTmES")
     st.markdown("---")
     st.markdown("### 📢 系統公告")
-    st.success("✅ 目前版本：V54.0 (精準分離版)")
+    st.success("✅ 目前版本：V55.0 (原廠復原版)")
     with st.expander("📜 點此查看版本更新軌跡"):
         st.markdown("""
-        **V54.0 (精準分離)**
-        - 🔧 保留 Header 容器但設為透明，讓左側按鈕自然顯現。
-        - 🚫 精準鎖定右上角 Toolbar 進行隱藏。
-        - 🚫 針對 Cloud Viewer Footer 進行遮蓋。
-
+        **V55.0 (原廠復原)**
+        - 🔧 恢復 Streamlit 標準介面 (左側選單、右上角工具列、Footer)，確保手機版操作正常。
+        - ✨ 保留所有核心功能：車相矩陣、五行上色、改裝戰略整合。
+        
         **V50.0 (旗艦整合)**
-        - 🎨 智能關鍵字著色。
-        - 🔗 改裝戰略整合。
+        - 🎨 智能關鍵字著色：文案中的五行與顏色自動高亮。
+        - 🔗 改裝戰略整合：將「車相建議」與「流年運勢」結合。
         """)
     st.markdown("---")
     st.markdown("© 2026 AliVerse")
