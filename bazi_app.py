@@ -10,7 +10,7 @@ import textwrap
 import re
 import streamlit.components.v1 as components
 
-# --- 1. 網頁設定 (V52.0 核彈修復版) ---
+# --- 1. 網頁設定 (V53.0 核彈腳本版) ---
 st.set_page_config(
     page_title="AliVerse 八字五行分析 - 2026運勢免費測 | 原廠車型鑑定",
     page_icon="🏎️",
@@ -40,7 +40,6 @@ def scroll_to(target_id):
                 element.scrollIntoView({{behavior: 'smooth', block: 'center'}});
             }}
         }}
-        // 稍微延遲以確保 DOM 已渲染
         setTimeout(scroll, 300);
     </script>
     """
@@ -51,89 +50,99 @@ if 'scroll_target' not in st.session_state:
     st.session_state['scroll_target'] = None
 
 # =================================================================
-# [V52.0 新增] JavaScript 注入：強制移除干擾元素 (The Cleaner)
+# [V53.0] JavaScript 主動獵殺腳本 (The Hunter)
+# 用於強制移除頑強的 Footer 和 Toolbar，並保護左上角按鈕
 # =================================================================
-# 這段 JS 會在網頁加載後執行，直接從 DOM 中移除 footer 和 toolbar
-cleaner_js = """
+hunter_js = """
 <script>
-    function cleanUI() {
-        // 1. 移除右上角工具列 (Toolbar)
-        const toolbar = document.querySelector('[data-testid="stToolbar"]');
-        if (toolbar) toolbar.remove();
-
-        // 2. 移除右上角功能選單 (Header Action Elements)
-        const headerActions = document.querySelector('[data-testid="stHeaderActionElements"]');
-        if (headerActions) headerActions.remove();
-
-        // 3. 移除頂部彩條 (Decoration)
-        const decoration = document.querySelector('[data-testid="stDecoration"]');
-        if (decoration) decoration.remove();
-
-        // 4. 移除底部 Footer (包含 Hosted with Streamlit)
-        const footer = document.querySelector('footer');
-        if (footer) footer.remove();
+    function huntAndKill() {
+        // 1. 獵殺右上角工具列
+        var toolbar = window.parent.document.querySelector('[data-testid="stToolbar"]');
+        if (toolbar) { toolbar.style.display = 'none'; }
         
-        // 5. 針對 Cloud 版的特殊 Footer 進行移除
-        const viewerFooter = document.querySelector('.viewerFooter-root');
-        if (viewerFooter) viewerFooter.remove();
+        var headerActions = window.parent.document.querySelector('[data-testid="stHeaderActionElements"]');
+        if (headerActions) { headerActions.style.display = 'none'; }
+
+        // 2. 獵殺底部 Footer (Hosted with Streamlit)
+        var footer = window.parent.document.querySelector('footer');
+        if (footer) { footer.style.display = 'none'; }
         
-        // 6. 確保左上角按鈕存在並調整樣式
-        const sidebarBtn = document.querySelector('[data-testid="stSidebarCollapsedControl"]');
+        var viewerFooter = window.parent.document.querySelector('.viewerFooter-root');
+        if (viewerFooter) { viewerFooter.style.display = 'none'; }
+
+        // 3. 保護左上角按鈕 (確保它可見且位置正確)
+        var sidebarBtn = window.parent.document.querySelector('[data-testid="stSidebarCollapsedControl"]');
         if (sidebarBtn) {
-            sidebarBtn.style.visibility = 'visible';
             sidebarBtn.style.display = 'block';
+            sidebarBtn.style.visibility = 'visible';
+            sidebarBtn.style.zIndex = '9999999'; // 最高層級
+            sidebarBtn.style.position = 'fixed';
+            sidebarBtn.style.top = '15px';
+            sidebarBtn.style.left = '15px';
             sidebarBtn.style.color = '#FFD700'; // 金色
-            sidebarBtn.style.border = '1px solid #FFD700';
+            sidebarBtn.style.backgroundColor = 'rgba(20, 20, 30, 0.8)'; // 深色背景
             sidebarBtn.style.borderRadius = '50%';
-            sidebarBtn.style.backgroundColor = 'rgba(0,0,0,0.5)';
+            sidebarBtn.style.border = '1px solid #FFD700';
+            sidebarBtn.style.width = '40px';
+            sidebarBtn.style.height = '40px';
+        }
+        
+        // 4. 處理 Header (讓它透明，不擋點擊)
+        var header = window.parent.document.querySelector('header[data-testid="stHeader"]');
+        if (header) {
+            header.style.background = 'transparent';
+            header.style.pointerEvents = 'none'; // 讓點擊穿透
+            // 但要把按鈕的點擊事件加回來
+            if (sidebarBtn) sidebarBtn.style.pointerEvents = 'auto';
         }
     }
     
-    // 每 500 毫秒執行一次清理，確保動態載入的元素也被刪除
-    setInterval(cleanUI, 500);
+    // 設置定時器，每 100ms 執行一次獵殺，確保就算它重新加載也會被刪除
+    setInterval(huntAndKill, 100);
 </script>
 """
-components.html(cleaner_js, height=0)
-# =================================================================
+components.html(hunter_js, height=0)
 
-
-# --- 2. CSS 樣式美化 (保留基礎樣式，以防 JS 失效) ---
+# --- 2. CSS 樣式美化 (作為 JS 的備案) ---
 st.markdown("""
     <style>
     body { font-family: '微軟正黑體', sans-serif; }
     
-    /* 基礎 CSS 隱藏 (雙重保險) */
-    [data-testid="stToolbar"] { visibility: hidden; }
-    [data-testid="stDecoration"] { visibility: hidden; }
-    footer { visibility: hidden; }
-    #MainMenu { visibility: hidden; }
+    /* 備用 CSS：隱藏右上與右下 */
+    [data-testid="stToolbar"], [data-testid="stDecoration"], [data-testid="stHeaderActionElements"] {
+        visibility: hidden !important;
+        display: none !important;
+    }
     
-    /* 確保 Header 區域不佔位但可見 (為了左上角按鈕) */
-    header[data-testid="stHeader"] {
-        background: transparent !important;
+    footer {
+        visibility: hidden !important;
+        display: none !important;
+        height: 0px !important;
+    }
+    
+    /* 調整頂部邊距，給左上角按鈕留空間 */
+    .block-container {
+        padding-top: 60px !important;
     }
 
-    /* 側邊欄呼吸燈 */
-    [data-testid="stSidebarCollapsedControl"] {
-        animation: glowing 2s infinite;
-        z-index: 999999 !important;
-    }
-    @keyframes glowing {
-        0% { box-shadow: 0 0 5px #FFD700; transform: scale(1); }
-        50% { box-shadow: 0 0 15px #FF4B4B; transform: scale(1.1); }
-        100% { box-shadow: 0 0 5px #FFD700; transform: scale(1); }
-    }
-    
     /* 浮動指引文字 */
     .sidebar-hint {
-        position: fixed; top: 60px; left: 10px; z-index: 999999;
-        background-color: #FF4B4B; color: white; padding: 5px 10px;
-        border-radius: 15px; font-size: 12px; font-weight: bold;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.3); animation: bounce 1.5s infinite;
+        position: fixed; 
+        top: 25px; 
+        left: 65px; 
+        z-index: 999999;
+        background-color: #FF4B4B; 
+        color: white; 
+        padding: 5px 12px;
+        border-radius: 20px; 
+        font-size: 14px; 
+        font-weight: bold;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3); 
+        animation: bounce 1.5s infinite;
         pointer-events: none;
     }
-    .sidebar-hint::before { content: "▲"; position: absolute; top: -12px; left: 10px; color: #FF4B4B; font-size: 14px; }
-    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+    .sidebar-hint::before { content: "◀"; position: absolute; left: -12px; top: 6px; color: #FF4B4B; font-size: 14px; }
+    @keyframes bounce { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(5px); } }
 
     /* Hero Banner */
     .hero-container {
@@ -329,10 +338,10 @@ with st.sidebar:
     st.link_button("💬 加入 LINE 官方帳號", "https://lin.ee/3woTmES")
     st.markdown("---")
     st.markdown("### 📢 系統公告")
-    st.success("✅ 目前版本：V52.0 (核彈修復版)")
+    st.success("✅ 目前版本：V53.0 (核彈腳本版)")
     with st.expander("📜 點此查看版本更新軌跡"):
         st.markdown("""
-        **V52.0 (核彈修復)**
+        **V53.0 (核彈腳本)**
         - ☢️ 注入 JavaScript 進行 DOM 清理，強制移除雲端版 Footer 與右上角干擾。
         - 🔧 確保左上角按鈕在 JS 清理後依然被保護並顯形。
 
@@ -420,11 +429,7 @@ def highlight_keywords(text):
     
     # 進行替換 (使用正則表達式避免重複替換標籤內的字)
     for kw, color in keyword_colors.items():
-        # 簡單替換 (注意：這裡簡化處理，若有關鍵字重疊可能需更複雜邏輯)
-        # 為了避免替換掉 HTML tag 裡面的字，我們只替換那些沒有被 < > 包圍的字，但這裡用簡單 replace
-        # 技巧：先檢查是否已經被 span 包裹 (這裡暫略，假設輸入純文字)
         text = text.replace(kw, f"<span style='color:{color}; font-weight:bold;'>{kw}</span>")
-    
     return text
 
 def get_colored_text(elements_list):
@@ -661,7 +666,7 @@ if st.session_state['analyzed']:
         if char_wx == day_master_wx or char_wx == resource_wx:
             score += w
     
-    # 計算格局分數
+    # 計算格局分數 (保持強弱判定邏輯，但喜忌神使用新邏輯覆寫)
     strength_type = ""
     ascii_art = ""
     base_type = ""
