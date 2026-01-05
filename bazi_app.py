@@ -10,7 +10,7 @@ import textwrap
 import re
 import streamlit.components.v1 as components
 
-# --- 1. 網頁設定 (V50.0 旗艦整合版) ---
+# --- 1. 網頁設定 (V50.1 專業品牌版) ---
 st.set_page_config(
     page_title="AliVerse 八字五行分析 - 2026運勢免費測 | 原廠車型鑑定",
     page_icon="🏎️",
@@ -55,13 +55,33 @@ st.markdown("""
     <style>
     body { font-family: '微軟正黑體', sans-serif; }
     
-    /* 強力隱藏 Streamlit 預設元件 */
-    .stDeployButton { display: none !important; }
-    [data-testid="stDecoration"] { display: none !important; }
-    header { visibility: visible !important; background: transparent !important; }
+    /* --- [V50.1 新增] 強力隱藏右上角選單與 GitHub 貓咪 --- */
+    /* 隱藏整個工具列 (包含 Deploy, 漢堡選單, GitHub icon) */
+    [data-testid="stToolbar"] {
+        visibility: hidden !important;
+        display: none !important;
+    }
+    /* 隱藏頂部裝飾條 */
+    [data-testid="stDecoration"] {
+        visibility: hidden !important;
+        display: none !important;
+    }
+    /* 隱藏 Header 區域 */
+    header {
+        visibility: hidden !important;
+    }
+    /* 隱藏狀態讀取圓圈 (右上角) */
+    [data-testid="stStatusWidget"] {
+        visibility: hidden !important;
+    }
+    /* 隱藏部署按鈕 */
+    .stDeployButton {
+        display: none !important;
+    }
+    /* --------------------------------------------------- */
+
     footer { display: none !important; }
-    #MainMenu { display: inline-block !important; }
-    [data-testid="stStatusWidget"] { display: none !important; }
+    #MainMenu { display: none !important; }
     
     /* 側邊欄呼吸燈 */
     [data-testid="stSidebarCollapsedControl"] {
@@ -283,16 +303,16 @@ with st.sidebar:
     st.link_button("💬 加入 LINE 官方帳號", "https://lin.ee/3woTmES")
     st.markdown("---")
     st.markdown("### 📢 系統公告")
-    st.success("✅ 目前版本：V50.0 (旗艦整合版)")
+    st.success("✅ 目前版本：V50.1 (專業品牌版)")
     with st.expander("📜 點此查看版本更新軌跡"):
         st.markdown("""
-        **V50.0 (旗艦整合)**
-        - 🎨 智能關鍵字著色：文案中的五行與顏色自動高亮，視覺更直觀。
-        - 🔗 改裝戰略整合：將「車相建議」與「流年運勢」結合，提供明確的行動目的。
-        - 🎯 目的導向文案：清楚解釋「為什麼要這樣改」。
+        **V50.1 (專業品牌)**
+        - 🚫 強力隱藏 GitHub 貓咪與工具列，打造沉浸式體驗。
         
-        **V49.0 (完美轉折)**
-        - 🌉 新增「技師總監診斷」：作為原廠規格與改裝方案的過渡橋樑。
+        **V50.0 (旗艦整合)**
+        - 🎨 智能關鍵字著色：文案中的五行與顏色自動高亮。
+        - 🔗 改裝戰略整合：將「車相建議」與「流年運勢」結合。
+        - 🎯 目的導向文案。
         """)
     st.markdown("---")
     st.markdown("© 2026 AliVerse")
@@ -620,7 +640,7 @@ if st.session_state['analyzed']:
         if char_wx == day_master_wx or char_wx == resource_wx:
             score += w
     
-    # 計算格局分數
+    # 計算格局分數 (保持強弱判定邏輯，但喜忌神使用新邏輯覆寫)
     strength_type = ""
     ascii_art = ""
     base_type = ""
@@ -646,9 +666,9 @@ if st.session_state['analyzed']:
         ascii_art = """      .---.\n    _/__~__\_\n   (_________)\n    /       \ \n   [   UFO   ]"""
         soul_message = f"親愛的 {day_master_wx} 行概念車駕駛：您是變色龍。不要被世俗的「自我」框架綁住。當您與趨勢合而為一，您就是趨勢本身。"
 
-    # ==========================================
+    # =======================================================
     # [V48.0 Upgrade] 使用新函數同步喜忌神
-    # ==========================================
+    # =======================================================
     joyful_gods, taboo_gods, god_reason = determine_fates_guide(day_master_wx, int(inp_month))
 
     # 提早定義顏色與運勢
