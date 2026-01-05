@@ -10,7 +10,7 @@ import textwrap
 import re
 import streamlit.components.v1 as components
 
-# --- 1. 網頁設定 (V50.2 品牌純淨終極版) ---
+# --- 1. 網頁設定 (V50.3 修正側邊欄與Footer版) ---
 st.set_page_config(
     page_title="AliVerse 八字五行分析 - 2026運勢免費測 | 原廠車型鑑定",
     page_icon="🏎️",
@@ -55,54 +55,43 @@ st.markdown("""
     <style>
     body { font-family: '微軟正黑體', sans-serif; }
     
-    /* --- [V50.2 新增] 品牌純淨化工程 (隱藏所有官方標記) --- */
+    /* --- [V50.3 修正] 品牌純淨化工程 (精準隱藏) --- */
     
-    /* 1. 隱藏右上角工具列 (Github貓咪, Deploy按鈕, 漢堡選單) */
-    [data-testid="stToolbar"] {
-        visibility: hidden !important;
+    /* 1. 隱藏右上角功能區 (Deploy, GitHub, 三點選單) */
+    /* 注意：不隱藏 header 本身，以免擋住左上角的側邊欄按鈕 */
+    [data-testid="stHeaderActionElements"] {
         display: none !important;
     }
     
-    /* 2. 隱藏頂部裝飾彩色條 */
+    /* 2. 隱藏頂部彩色裝飾條 */
     [data-testid="stDecoration"] {
-        visibility: hidden !important;
         display: none !important;
     }
     
-    /* 3. 隱藏頁面 Header */
-    header {
-        visibility: hidden !important;
-        display: none !important;
-    }
-    
-    /* 4. 隱藏右下角 Footer (Hosted with Streamlit) */
+    /* 3. 強力隱藏 Footer (Hosted with Streamlit) */
+    /* 針對所有 footer 相關元素進行隱藏 */
     footer {
         visibility: hidden !important;
         display: none !important;
         height: 0px !important;
     }
+    .stFooter {
+        display: none !important;
+    }
+    /* 針對 viewer 模式下的特定 footer 結構 */
+    footer a {
+        display: none !important;
+    }
     
-    /* 5. 隱藏右上角讀取狀態圈圈 */
+    /* 4. 隱藏右上角讀取狀態 (Running...) */
     [data-testid="stStatusWidget"] {
         visibility: hidden !important;
     }
     
-    /* 6. 強制隱藏部署按鈕 */
-    .stDeployButton {
-        display: none !important;
-    }
-    
-    /* 7. 針對手機版可能的底部留白修正 */
-    .block-container {
-        padding-bottom: 20px !important;
-    }
-    
-    /* --------------------------------------------------- */
-
-    #MainMenu { display: none !important; }
-    
-    /* 側邊欄呼吸燈 */
+    /* 5. 確保側邊欄按鈕 (手機版 >) 可見且好按 */
     [data-testid="stSidebarCollapsedControl"] {
+        display: block !important;
+        z-index: 999999 !important; /* 確保在最上層 */
         animation: glowing 2s infinite;
         border-radius: 50%;
         border: 2px solid #FFD700;
@@ -110,6 +99,16 @@ st.markdown("""
         background-color: rgba(0,0,0,0.5);
         color: #FFD700 !important;
     }
+    
+    /* 6. 手機版底部留白修正 */
+    .block-container {
+        padding-bottom: 50px !important;
+    }
+    
+    /* --------------------------------------------------- */
+
+    #MainMenu { display: none !important; }
+    
     @keyframes glowing {
         0% { box-shadow: 0 0 5px #FFD700; transform: scale(1); }
         50% { box-shadow: 0 0 20px #FF4B4B; transform: scale(1.1); }
@@ -321,11 +320,12 @@ with st.sidebar:
     st.link_button("💬 加入 LINE 官方帳號", "https://lin.ee/3woTmES")
     st.markdown("---")
     st.markdown("### 📢 系統公告")
-    st.success("✅ 目前版本：V50.2 (品牌純淨終極版)")
+    st.success("✅ 目前版本：V50.3 (修正側邊欄版)")
     with st.expander("📜 點此查看版本更新軌跡"):
         st.markdown("""
-        **V50.2 (品牌純淨)**
-        - 🚫 強力隱藏上方工具列與下方 Hosted 標籤，打造沉浸式體驗。
+        **V50.3 (修正側邊欄)**
+        - 🔧 修正右上角隱藏時，誤殺左側選單的問題。
+        - 🚫 強力移除底部 Hosted 標籤。
 
         **V50.0 (旗艦整合)**
         - 🎨 智能關鍵字著色：文案中的五行與顏色自動高亮。
