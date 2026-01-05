@@ -10,7 +10,7 @@ import textwrap
 import re
 import streamlit.components.v1 as components
 
-# --- 1. 網頁設定 (V50.1 專業品牌版) ---
+# --- 1. 網頁設定 (V50.2 品牌純淨終極版) ---
 st.set_page_config(
     page_title="AliVerse 八字五行分析 - 2026運勢免費測 | 原廠車型鑑定",
     page_icon="🏎️",
@@ -55,32 +55,50 @@ st.markdown("""
     <style>
     body { font-family: '微軟正黑體', sans-serif; }
     
-    /* --- [V50.1 新增] 強力隱藏右上角選單與 GitHub 貓咪 --- */
-    /* 隱藏整個工具列 (包含 Deploy, 漢堡選單, GitHub icon) */
+    /* --- [V50.2 新增] 品牌純淨化工程 (隱藏所有官方標記) --- */
+    
+    /* 1. 隱藏右上角工具列 (Github貓咪, Deploy按鈕, 漢堡選單) */
     [data-testid="stToolbar"] {
         visibility: hidden !important;
         display: none !important;
     }
-    /* 隱藏頂部裝飾條 */
+    
+    /* 2. 隱藏頂部裝飾彩色條 */
     [data-testid="stDecoration"] {
         visibility: hidden !important;
         display: none !important;
     }
-    /* 隱藏 Header 區域 */
+    
+    /* 3. 隱藏頁面 Header */
     header {
         visibility: hidden !important;
+        display: none !important;
     }
-    /* 隱藏狀態讀取圓圈 (右上角) */
+    
+    /* 4. 隱藏右下角 Footer (Hosted with Streamlit) */
+    footer {
+        visibility: hidden !important;
+        display: none !important;
+        height: 0px !important;
+    }
+    
+    /* 5. 隱藏右上角讀取狀態圈圈 */
     [data-testid="stStatusWidget"] {
         visibility: hidden !important;
     }
-    /* 隱藏部署按鈕 */
+    
+    /* 6. 強制隱藏部署按鈕 */
     .stDeployButton {
         display: none !important;
     }
+    
+    /* 7. 針對手機版可能的底部留白修正 */
+    .block-container {
+        padding-bottom: 20px !important;
+    }
+    
     /* --------------------------------------------------- */
 
-    footer { display: none !important; }
     #MainMenu { display: none !important; }
     
     /* 側邊欄呼吸燈 */
@@ -303,16 +321,15 @@ with st.sidebar:
     st.link_button("💬 加入 LINE 官方帳號", "https://lin.ee/3woTmES")
     st.markdown("---")
     st.markdown("### 📢 系統公告")
-    st.success("✅ 目前版本：V50.1 (專業品牌版)")
+    st.success("✅ 目前版本：V50.2 (品牌純淨終極版)")
     with st.expander("📜 點此查看版本更新軌跡"):
         st.markdown("""
-        **V50.1 (專業品牌)**
-        - 🚫 強力隱藏 GitHub 貓咪與工具列，打造沉浸式體驗。
-        
+        **V50.2 (品牌純淨)**
+        - 🚫 強力隱藏上方工具列與下方 Hosted 標籤，打造沉浸式體驗。
+
         **V50.0 (旗艦整合)**
         - 🎨 智能關鍵字著色：文案中的五行與顏色自動高亮。
         - 🔗 改裝戰略整合：將「車相建議」與「流年運勢」結合。
-        - 🎯 目的導向文案。
         """)
     st.markdown("---")
     st.markdown("© 2026 AliVerse")
@@ -640,7 +657,7 @@ if st.session_state['analyzed']:
         if char_wx == day_master_wx or char_wx == resource_wx:
             score += w
     
-    # 計算格局分數 (保持強弱判定邏輯，但喜忌神使用新邏輯覆寫)
+    # 計算格局分數
     strength_type = ""
     ascii_art = ""
     base_type = ""
