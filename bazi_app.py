@@ -10,7 +10,7 @@ import textwrap
 import re
 import streamlit.components.v1 as components
 
-# --- 1. 網頁設定 (V50.5 UI修復版) ---
+# --- 1. 網頁設定 (V50.6 終極修復版) ---
 st.set_page_config(
     page_title="AliVerse 八字五行分析 - 2026運勢免費測 | 原廠車型鑑定",
     page_icon="🏎️",
@@ -55,86 +55,101 @@ st.markdown("""
     <style>
     body { font-family: '微軟正黑體', sans-serif; }
     
-    /* === [V50.5] UI 修復與品牌鎖定 === */
+    /* === [V50.6] 品牌純淨化：終極暴力修正 === */
     
-    /* 1. 處理頂部 Header：讓它透明，但不要消失 (為了保留左邊按鈕) */
+    /* 1. 處理頂部 Header：讓它完全透明，並不阻擋點擊 */
     header[data-testid="stHeader"] {
-        background-color: transparent !important;
-        z-index: 1 !important; /* 確保它不會擋住內容 */
+        background: transparent !important;
+        pointer-events: none !important; /* 讓點擊穿透 Header */
+        z-index: 0 !important;
     }
     
-    /* 2. 隱藏頂部裝飾彩條 */
-    [data-testid="stDecoration"] {
+    /* 2. 隱藏頂部彩條與右上角工具列 */
+    [data-testid="stDecoration"], [data-testid="stToolbar"], [data-testid="stHeaderActionElements"] {
         display: none !important;
+        visibility: hidden !important;
     }
     
-    /* 3. 精準殺掉右上角工具列 (GitHub, Deploy, 選單) */
-    [data-testid="stToolbar"] {
-        display: none !important;
-    }
-    [data-testid="stHeaderActionElements"] {
-        display: none !important;
-    }
-    
-    /* 4. 強制顯示並美化左上角側邊欄按鈕 (>>) */
+    /* 3. 【關鍵修正】左上角側邊欄按鈕 (>>) 強制顯形與移位 */
     [data-testid="stSidebarCollapsedControl"] {
         display: block !important;
-        color: #FFD700 !important; /* 金色箭頭 */
-        background-color: rgba(0,0,0,0.6) !important; /* 半透明黑底 */
+        visibility: visible !important;
+        pointer-events: auto !important; /* 恢復點擊 */
+        
+        /* 強制固定在螢幕左上角，脫離 Header 的控制 */
+        position: fixed !important; 
+        top: 15px !important;
+        left: 15px !important;
+        z-index: 9999999 !important; /* 最高層級 */
+        
+        /* 美化按鈕：變成金色圓鈕 */
+        background-color: #FFD700 !important;
+        color: #000 !important;
         border-radius: 50% !important;
-        border: 1px solid #FFD700 !important;
-        top: 1rem !important; /* 調整位置 */
-        left: 1rem !important;
+        width: 45px !important;
+        height: 45px !important;
+        box-shadow: 0 4px 15px rgba(255, 215, 0, 0.6) !important;
+        border: 2px solid #fff !important;
+        transition: transform 0.2s;
+    }
+    /* 按鈕懸停效果 */
+    [data-testid="stSidebarCollapsedControl"]:hover {
+        transform: scale(1.1);
     }
     
-    /* 5. 暴力隱藏底部 Footer (包含手機版) */
-    footer {
+    /* 4. 【關鍵修正】暴力隱藏所有可能的 Footer (包含雲端版) */
+    footer, .stFooter {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        opacity: 0 !important;
+    }
+    /* 針對 Streamlit Cloud 的 Viewer Footer */
+    .viewerFooter-root, .viewerFooter-container {
         display: none !important;
         visibility: hidden !important;
     }
-    .stFooter {
-        display: none !important;
-    }
-    /* 針對雲端 Viewer 的特殊 Footer */
-    div[class^="viewerFooter"] {
+    /* 針對 iframe 嵌入式的 Footer */
+    iframe[title="Streamlit footer"] {
         display: none !important;
     }
     
-    /* 6. 隱藏右上角讀取狀態 */
-    [data-testid="stStatusWidget"] {
-        visibility: hidden !important;
-    }
-    
-    /* 7. 修正頂部間距 (因為 Header 隱藏造成的跑版) */
+    /* 5. 調整內容間距，避免被固定按鈕擋住 */
     .block-container {
-        padding-top: 3rem !important;
-        padding-bottom: 5rem !important;
+        padding-top: 50px !important;
+        padding-bottom: 50px !important;
+    }
+    
+    /* 6. 浮動指引文字 (配合新的按鈕位置) */
+    .sidebar-hint {
+        position: fixed; 
+        top: 25px; 
+        left: 70px; /* 移到按鈕右邊 */
+        z-index: 999999;
+        background-color: #FF4B4B; 
+        color: white; 
+        padding: 5px 12px;
+        border-radius: 20px; 
+        font-size: 14px; 
+        font-weight: bold;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3); 
+        animation: bounce 1.5s infinite;
+        pointer-events: none;
+    }
+    .sidebar-hint::before { 
+        content: "◀"; /* 指向左邊的按鈕 */
+        position: absolute; 
+        left: -12px; 
+        top: 6px;
+        color: #FF4B4B; 
+        font-size: 14px; 
     }
     
     /* ======================================================== */
 
     #MainMenu { display: none !important; }
     
-    /* 側邊欄呼吸燈 */
-    [data-testid="stSidebarCollapsedControl"] {
-        animation: glowing 2s infinite;
-    }
-    @keyframes glowing {
-        0% { box-shadow: 0 0 5px #FFD700; transform: scale(1); }
-        50% { box-shadow: 0 0 15px #FF4B4B; transform: scale(1.1); }
-        100% { box-shadow: 0 0 5px #FFD700; transform: scale(1); }
-    }
-    
-    /* 浮動指引文字 */
-    .sidebar-hint {
-        position: fixed; top: 60px; left: 10px; z-index: 999999;
-        background-color: #FF4B4B; color: white; padding: 5px 10px;
-        border-radius: 15px; font-size: 12px; font-weight: bold;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.3); animation: bounce 1.5s infinite;
-        pointer-events: none;
-    }
-    .sidebar-hint::before { content: "▲"; position: absolute; top: -12px; left: 10px; color: #FF4B4B; font-size: 14px; }
-    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+    @keyframes bounce { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(5px); } }
 
     /* Hero Banner */
     .hero-container {
@@ -307,7 +322,7 @@ st.markdown("""
     }
     @keyframes pulse-gold { from { opacity: 0.6; transform: scale(0.95); } to { opacity: 1; transform: scale(1.05); } }
     </style>
-    <div class="sidebar-hint">👈 點此開啟駕駛艙 (商城/客服)</div>
+    <div class="sidebar-hint">開啟駕駛艙 (商城/客服)</div>
     """, unsafe_allow_html=True)
 
 # === 進站廣播 ===
@@ -330,17 +345,15 @@ with st.sidebar:
     st.link_button("💬 加入 LINE 官方帳號", "https://lin.ee/3woTmES")
     st.markdown("---")
     st.markdown("### 📢 系統公告")
-    st.success("✅ 目前版本：V50.5 (UI修復版)")
+    st.success("✅ 目前版本：V50.6 (終極修復版)")
     with st.expander("📜 點此查看版本更新軌跡"):
         st.markdown("""
+        **V50.6 (終極修復)**
+        - 🔧 側邊欄按鈕：強制移至最上層並固定，解決消失問題。
+        - 🚫 Footer：使用 CSS 暴力隱藏所有類型的頁尾。
+        
         **V50.5 (UI修復)**
-        - 🔧 修正右上角工具列隱藏問題 (雙重鎖定)。
-        - 🔧 修復左側邊欄按鈕消失問題 (強制顯形 + 樣式美化)。
-        - 🚫 徹底移除底部 Footer。
-
-        **V50.0 (旗艦整合)**
-        - 🎨 智能關鍵字著色。
-        - 🔗 改裝戰略整合。
+        - 🔧 Header 透明化。
         """)
     st.markdown("---")
     st.markdown("© 2026 AliVerse")
