@@ -10,7 +10,7 @@ import textwrap
 import re
 import streamlit.components.v1 as components
 
-# --- 1. 網頁設定 (V53.0 核彈腳本版) ---
+# --- 1. 網頁設定 (V54.0 最終精準分離版) ---
 st.set_page_config(
     page_title="AliVerse 八字五行分析 - 2026運勢免費測 | 原廠車型鑑定",
     page_icon="🏎️",
@@ -40,6 +40,7 @@ def scroll_to(target_id):
                 element.scrollIntoView({{behavior: 'smooth', block: 'center'}});
             }}
         }}
+        // 稍微延遲以確保 DOM 已渲染
         setTimeout(scroll, 300);
     </script>
     """
@@ -49,87 +50,78 @@ def scroll_to(target_id):
 if 'scroll_target' not in st.session_state:
     st.session_state['scroll_target'] = None
 
-# =================================================================
-# [V53.0] JavaScript 主動獵殺腳本 (The Hunter)
-# 用於強制移除頑強的 Footer 和 Toolbar，並保護左上角按鈕
-# =================================================================
-hunter_js = """
-<script>
-    function huntAndKill() {
-        // 1. 獵殺右上角工具列
-        var toolbar = window.parent.document.querySelector('[data-testid="stToolbar"]');
-        if (toolbar) { toolbar.style.display = 'none'; }
-        
-        var headerActions = window.parent.document.querySelector('[data-testid="stHeaderActionElements"]');
-        if (headerActions) { headerActions.style.display = 'none'; }
-
-        // 2. 獵殺底部 Footer (Hosted with Streamlit)
-        var footer = window.parent.document.querySelector('footer');
-        if (footer) { footer.style.display = 'none'; }
-        
-        var viewerFooter = window.parent.document.querySelector('.viewerFooter-root');
-        if (viewerFooter) { viewerFooter.style.display = 'none'; }
-
-        // 3. 保護左上角按鈕 (確保它可見且位置正確)
-        var sidebarBtn = window.parent.document.querySelector('[data-testid="stSidebarCollapsedControl"]');
-        if (sidebarBtn) {
-            sidebarBtn.style.display = 'block';
-            sidebarBtn.style.visibility = 'visible';
-            sidebarBtn.style.zIndex = '9999999'; // 最高層級
-            sidebarBtn.style.position = 'fixed';
-            sidebarBtn.style.top = '15px';
-            sidebarBtn.style.left = '15px';
-            sidebarBtn.style.color = '#FFD700'; // 金色
-            sidebarBtn.style.backgroundColor = 'rgba(20, 20, 30, 0.8)'; // 深色背景
-            sidebarBtn.style.borderRadius = '50%';
-            sidebarBtn.style.border = '1px solid #FFD700';
-            sidebarBtn.style.width = '40px';
-            sidebarBtn.style.height = '40px';
-        }
-        
-        // 4. 處理 Header (讓它透明，不擋點擊)
-        var header = window.parent.document.querySelector('header[data-testid="stHeader"]');
-        if (header) {
-            header.style.background = 'transparent';
-            header.style.pointerEvents = 'none'; // 讓點擊穿透
-            // 但要把按鈕的點擊事件加回來
-            if (sidebarBtn) sidebarBtn.style.pointerEvents = 'auto';
-        }
-    }
-    
-    // 設置定時器，每 100ms 執行一次獵殺，確保就算它重新加載也會被刪除
-    setInterval(huntAndKill, 100);
-</script>
-"""
-components.html(hunter_js, height=0)
-
-# --- 2. CSS 樣式美化 (作為 JS 的備案) ---
+# --- 2. CSS 樣式美化 (V54.0 重寫版) ---
 st.markdown("""
     <style>
     body { font-family: '微軟正黑體', sans-serif; }
     
-    /* 備用 CSS：隱藏右上與右下 */
-    [data-testid="stToolbar"], [data-testid="stDecoration"], [data-testid="stHeaderActionElements"] {
-        visibility: hidden !important;
+    /* ================================================================= */
+    /* === [V54.0] 修正策略：保留 Header 結構，只殺內容 === */
+    /* ================================================================= */
+    
+    /* 1. 針對頂部 Header：保留它！但讓它變透明、隱形 */
+    header[data-testid="stHeader"] {
+        background-color: transparent !important;
+        border-bottom: none !important;
+    }
+    
+    /* 2. 針對 Header 的「裝飾彩條」：隱藏 */
+    [data-testid="stDecoration"] {
         display: none !important;
     }
     
-    footer {
+    /* 3. 針對 Header 的「右側工具列」(Toolbar/Options/GitHub) */
+    /* 這是關鍵！我們只隱藏右邊，不動左邊 */
+    [data-testid="stToolbar"] {
+        display: none !important; 
         visibility: hidden !important;
-        display: none !important;
-        height: 0px !important;
     }
-    
-    /* 調整頂部邊距，給左上角按鈕留空間 */
-    .block-container {
-        padding-top: 60px !important;
+    [data-testid="stHeaderActionElements"] {
+        display: none !important;
+    }
+    /* 針對可能殘留的右側按鈕容器 */
+    header[data-testid="stHeader"] > div:last-child {
+        display: none !important;
     }
 
-    /* 浮動指引文字 */
+    /* 4. 針對 Header 的「左側按鈕」(>>) */
+    /* 因為我們保留了 Header，所以這裡只要負責「上色」就好 */
+    [data-testid="stSidebarCollapsedControl"] {
+        display: block !important;
+        color: #FFD700 !important; /* 金色 */
+        background-color: rgba(20, 20, 30, 0.8) !important; /* 加個底色比較明顯 */
+        border: 1px solid #FFD700 !important;
+        border-radius: 50% !important;
+        /* 不用 position: fixed，讓它自然跟著 Header 走 */
+    }
+    
+    /* 5. 針對底部 Footer (Hosted by Streamlit) */
+    footer {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0px !important;
+    }
+    /* 暴力遮蓋法：如果 display:none 失效，我們用一個黑條蓋過去 */
+    .viewerFooter-root {
+        display: none !important;
+    }
+    /* 為了保險，把 footer 的文字顏色變成跟背景一樣 */
+    footer, footer a {
+        color: transparent !important;
+    }
+
+    /* 6. 調整頂部內容間距 */
+    /* 因為 Header 變透明了，內容可以稍微往上，但不要被按鈕擋住 */
+    .block-container {
+        padding-top: 3rem !important; 
+        padding-bottom: 5rem !important; 
+    }
+    
+    /* 7. 浮動指引文字 */
     .sidebar-hint {
         position: fixed; 
-        top: 25px; 
-        left: 65px; 
+        top: 60px; /* 配合按鈕位置 */
+        left: 10px; 
         z-index: 999999;
         background-color: #FF4B4B; 
         color: white; 
@@ -137,12 +129,24 @@ st.markdown("""
         border-radius: 20px; 
         font-size: 14px; 
         font-weight: bold;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.3); 
+        box-shadow: 0 4px 10px rgba(0,0,0,0.5); 
         animation: bounce 1.5s infinite;
         pointer-events: none;
     }
-    .sidebar-hint::before { content: "◀"; position: absolute; left: -12px; top: 6px; color: #FF4B4B; font-size: 14px; }
-    @keyframes bounce { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(5px); } }
+    .sidebar-hint::before { 
+        content: "▲"; 
+        position: absolute; 
+        left: 15px; 
+        top: -12px;
+        color: #FF4B4B; 
+        font-size: 14px; 
+    }
+    
+    /* ================================================================= */
+
+    #MainMenu { display: none !important; }
+    
+    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
 
     /* Hero Banner */
     .hero-container {
@@ -338,12 +342,13 @@ with st.sidebar:
     st.link_button("💬 加入 LINE 官方帳號", "https://lin.ee/3woTmES")
     st.markdown("---")
     st.markdown("### 📢 系統公告")
-    st.success("✅ 目前版本：V53.0 (核彈腳本版)")
+    st.success("✅ 目前版本：V54.0 (精準分離版)")
     with st.expander("📜 點此查看版本更新軌跡"):
         st.markdown("""
-        **V53.0 (核彈腳本)**
-        - ☢️ 注入 JavaScript 進行 DOM 清理，強制移除雲端版 Footer 與右上角干擾。
-        - 🔧 確保左上角按鈕在 JS 清理後依然被保護並顯形。
+        **V54.0 (精準分離)**
+        - 🔧 保留 Header 容器但設為透明，讓左側按鈕自然顯現。
+        - 🚫 精準鎖定右上角 Toolbar 進行隱藏。
+        - 🚫 針對 Cloud Viewer Footer 進行遮蓋。
 
         **V50.0 (旗艦整合)**
         - 🎨 智能關鍵字著色。
@@ -666,7 +671,7 @@ if st.session_state['analyzed']:
         if char_wx == day_master_wx or char_wx == resource_wx:
             score += w
     
-    # 計算格局分數 (保持強弱判定邏輯，但喜忌神使用新邏輯覆寫)
+    # 計算格局分數
     strength_type = ""
     ascii_art = ""
     base_type = ""
