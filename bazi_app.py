@@ -10,7 +10,7 @@ import textwrap
 import re
 import streamlit.components.v1 as components
 
-# --- 1. 網頁設定 (V50.3 修正側邊欄與Footer版) ---
+# --- 1. 網頁設定 (V50.4 精準手術版) ---
 st.set_page_config(
     page_title="AliVerse 八字五行分析 - 2026運勢免費測 | 原廠車型鑑定",
     page_icon="🏎️",
@@ -55,63 +55,74 @@ st.markdown("""
     <style>
     body { font-family: '微軟正黑體', sans-serif; }
     
-    /* --- [V50.3 修正] 品牌純淨化工程 (精準隱藏) --- */
+    /* === [V50.4] 品牌純淨化：精準手術 (Surgical Clean-up) === */
     
-    /* 1. 隱藏右上角功能區 (Deploy, GitHub, 三點選單) */
-    /* 注意：不隱藏 header 本身，以免擋住左上角的側邊欄按鈕 */
-    [data-testid="stHeaderActionElements"] {
-        display: none !important;
-    }
-    
-    /* 2. 隱藏頂部彩色裝飾條 */
-    [data-testid="stDecoration"] {
-        display: none !important;
-    }
-    
-    /* 3. 強力隱藏 Footer (Hosted with Streamlit) */
-    /* 針對所有 footer 相關元素進行隱藏 */
-    footer {
+    /* 1. 殺掉右上角的所有東西 (Toolbar, GitHub, Menu) */
+    [data-testid="stToolbar"] {
         visibility: hidden !important;
         display: none !important;
         height: 0px !important;
     }
-    .stFooter {
-        display: none !important;
-    }
-    /* 針對 viewer 模式下的特定 footer 結構 */
-    footer a {
-        display: none !important;
-    }
-    
-    /* 4. 隱藏右上角讀取狀態 (Running...) */
-    [data-testid="stStatusWidget"] {
+    [data-testid="stHeaderActionElements"] {
         visibility: hidden !important;
+        display: none !important;
+        height: 0px !important;
     }
     
-    /* 5. 確保側邊欄按鈕 (手機版 >) 可見且好按 */
+    /* 2. 殺掉頂部彩條 */
+    [data-testid="stDecoration"] {
+        visibility: hidden !important;
+        display: none !important;
+        height: 0px !important;
+    }
+    
+    /* 3. 保留並強化左上角側邊欄按鈕 (>>) */
     [data-testid="stSidebarCollapsedControl"] {
+        visibility: visible !important;
         display: block !important;
-        z-index: 999999 !important; /* 確保在最上層 */
-        animation: glowing 2s infinite;
-        border-radius: 50%;
-        border: 2px solid #FFD700;
-        box-shadow: 0 0 10px #FFD700;
-        background-color: rgba(0,0,0,0.5);
+        z-index: 99999999 !important; /* 確保它在最上層 */
+        
+        /* 讓按鈕更明顯一點，避免被背景吃掉 */
+        background-color: rgba(20, 20, 30, 0.8) !important;
+        border: 1px solid #FFD700 !important;
         color: #FFD700 !important;
+        border-radius: 50%;
     }
     
-    /* 6. 手機版底部留白修正 */
+    /* 4. 徹底殺掉底部 Footer (Hosted with Streamlit) */
+    footer {
+        visibility: hidden !important;
+        display: none !important;
+        height: 0px !important;
+        position: fixed; /* 把屍體移出畫面 */
+        left: -9999px;
+    }
+    .stFooter {
+        visibility: hidden !important;
+        display: none !important;
+    }
+    /* 針對手機版可能的 viewer footer */
+    viewer-footer {
+        display: none !important;
+    }
+    
+    /* 5. 調整頂部留白 (因為 header 的右邊隱藏了，可能會有空白) */
     .block-container {
-        padding-bottom: 50px !important;
+        padding-top: 2rem !important; /* 稍微往上推 */
+        padding-bottom: 5rem !important; /* 底部留白給手機滑動 */
     }
     
-    /* --------------------------------------------------- */
+    /* ======================================================== */
 
     #MainMenu { display: none !important; }
     
+    /* 側邊欄呼吸燈 */
+    [data-testid="stSidebarCollapsedControl"] {
+        animation: glowing 2s infinite;
+    }
     @keyframes glowing {
         0% { box-shadow: 0 0 5px #FFD700; transform: scale(1); }
-        50% { box-shadow: 0 0 20px #FF4B4B; transform: scale(1.1); }
+        50% { box-shadow: 0 0 15px #FF4B4B; transform: scale(1.1); }
         100% { box-shadow: 0 0 5px #FFD700; transform: scale(1); }
     }
     
@@ -320,16 +331,17 @@ with st.sidebar:
     st.link_button("💬 加入 LINE 官方帳號", "https://lin.ee/3woTmES")
     st.markdown("---")
     st.markdown("### 📢 系統公告")
-    st.success("✅ 目前版本：V50.3 (修正側邊欄版)")
+    st.success("✅ 目前版本：V50.4 (精準手術版)")
     with st.expander("📜 點此查看版本更新軌跡"):
         st.markdown("""
-        **V50.3 (修正側邊欄)**
-        - 🔧 修正右上角隱藏時，誤殺左側選單的問題。
-        - 🚫 強力移除底部 Hosted 標籤。
+        **V50.4 (精準手術)**
+        - 🔧 修復右上角工具列隱藏問題 (雙重鎖定)。
+        - 🔧 修復左側邊欄按鈕消失問題 (強制顯形)。
+        - 🚫 徹底移除底部 Footer。
 
         **V50.0 (旗艦整合)**
-        - 🎨 智能關鍵字著色：文案中的五行與顏色自動高亮。
-        - 🔗 改裝戰略整合：將「車相建議」與「流年運勢」結合。
+        - 🎨 智能關鍵字著色。
+        - 🔗 改裝戰略整合。
         """)
     st.markdown("---")
     st.markdown("© 2026 AliVerse")
@@ -411,11 +423,7 @@ def highlight_keywords(text):
     
     # 進行替換 (使用正則表達式避免重複替換標籤內的字)
     for kw, color in keyword_colors.items():
-        # 簡單替換 (注意：這裡簡化處理，若有關鍵字重疊可能需更複雜邏輯)
-        # 為了避免替換掉 HTML tag 裡面的字，我們只替換那些沒有被 < > 包圍的字，但這裡用簡單 replace
-        # 技巧：先檢查是否已經被 span 包裹 (這裡暫略，假設輸入純文字)
         text = text.replace(kw, f"<span style='color:{color}; font-weight:bold;'>{kw}</span>")
-    
     return text
 
 def get_colored_text(elements_list):
@@ -468,11 +476,6 @@ def get_hidden_stems(branch):
 # [Logic] 全系統喜忌神同步判定邏輯 (含專家覆寫)
 # ==========================================
 def determine_fates_guide(day_master, month_idx):
-    """
-    根據日主與出生月，決定【喜用神】與【忌神】
-    expert_override: 針對特定格局 (如 Ali 的壬水酉月) 給予精準建議
-    return: (joyful_list, taboo_list, description)
-    """
     joyful = []
     taboo = []
     reason = ""
@@ -657,7 +660,7 @@ if st.session_state['analyzed']:
         if char_wx == day_master_wx or char_wx == resource_wx:
             score += w
     
-    # 計算格局分數
+    # 計算格局分數 (保持強弱判定邏輯，但喜忌神使用新邏輯覆寫)
     strength_type = ""
     ascii_art = ""
     base_type = ""
