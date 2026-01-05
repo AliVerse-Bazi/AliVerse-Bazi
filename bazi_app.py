@@ -10,7 +10,7 @@ import textwrap
 import re
 import streamlit.components.v1 as components
 
-# --- 1. 網頁設定 (V51.0 終極越獄版) ---
+# --- 1. 網頁設定 (V52.0 核彈修復版) ---
 st.set_page_config(
     page_title="AliVerse 八字五行分析 - 2026運勢免費測 | 原廠車型鑑定",
     page_icon="🏎️",
@@ -50,106 +50,90 @@ def scroll_to(target_id):
 if 'scroll_target' not in st.session_state:
     st.session_state['scroll_target'] = None
 
-# --- 2. CSS 樣式美化 (注入 JavaScript 強制移除) ---
+# =================================================================
+# [V52.0 新增] JavaScript 注入：強制移除干擾元素 (The Cleaner)
+# =================================================================
+# 這段 JS 會在網頁加載後執行，直接從 DOM 中移除 footer 和 toolbar
+cleaner_js = """
+<script>
+    function cleanUI() {
+        // 1. 移除右上角工具列 (Toolbar)
+        const toolbar = document.querySelector('[data-testid="stToolbar"]');
+        if (toolbar) toolbar.remove();
+
+        // 2. 移除右上角功能選單 (Header Action Elements)
+        const headerActions = document.querySelector('[data-testid="stHeaderActionElements"]');
+        if (headerActions) headerActions.remove();
+
+        // 3. 移除頂部彩條 (Decoration)
+        const decoration = document.querySelector('[data-testid="stDecoration"]');
+        if (decoration) decoration.remove();
+
+        // 4. 移除底部 Footer (包含 Hosted with Streamlit)
+        const footer = document.querySelector('footer');
+        if (footer) footer.remove();
+        
+        // 5. 針對 Cloud 版的特殊 Footer 進行移除
+        const viewerFooter = document.querySelector('.viewerFooter-root');
+        if (viewerFooter) viewerFooter.remove();
+        
+        // 6. 確保左上角按鈕存在並調整樣式
+        const sidebarBtn = document.querySelector('[data-testid="stSidebarCollapsedControl"]');
+        if (sidebarBtn) {
+            sidebarBtn.style.visibility = 'visible';
+            sidebarBtn.style.display = 'block';
+            sidebarBtn.style.color = '#FFD700'; // 金色
+            sidebarBtn.style.border = '1px solid #FFD700';
+            sidebarBtn.style.borderRadius = '50%';
+            sidebarBtn.style.backgroundColor = 'rgba(0,0,0,0.5)';
+        }
+    }
+    
+    // 每 500 毫秒執行一次清理，確保動態載入的元素也被刪除
+    setInterval(cleanUI, 500);
+</script>
+"""
+components.html(cleaner_js, height=0)
+# =================================================================
+
+
+# --- 2. CSS 樣式美化 (保留基礎樣式，以防 JS 失效) ---
 st.markdown("""
     <style>
     body { font-family: '微軟正黑體', sans-serif; }
     
-    /* ================================================================= */
-    /* === [V51.0] 終極越獄 CSS：不講武德的暴力隱藏 === */
-    /* ================================================================= */
+    /* 基礎 CSS 隱藏 (雙重保險) */
+    [data-testid="stToolbar"] { visibility: hidden; }
+    [data-testid="stDecoration"] { visibility: hidden; }
+    footer { visibility: hidden; }
+    #MainMenu { visibility: hidden; }
     
-    /* 1. 針對右上角 (Toolbar / Menu / GitHub) -> 殺無赦 */
-    [data-testid="stToolbar"], 
-    [data-testid="stHeaderActionElements"], 
-    .stApp > header {
-        display: none !important;
-        visibility: hidden !important;
-        height: 0px !important;
-        opacity: 0 !important;
-        pointer-events: none !important;
+    /* 確保 Header 區域不佔位但可見 (為了左上角按鈕) */
+    header[data-testid="stHeader"] {
+        background: transparent !important;
     }
 
-    /* 2. 針對右下角 (Hosted by Streamlit) -> 屬性獵殺 */
-    footer { display: none !important; }
-    .stFooter { display: none !important; }
-    #MainMenu + div { visibility: hidden !important; }
-    
-    /* 獵殺所有指向 streamlit.io 的連結 (通常是 footer) */
-    a[href*="streamlit.io"] {
-        display: none !important;
-        visibility: hidden !important;
-    }
-    /* 獵殺 Cloud Viewer 的特殊結構 */
-    div[class*="viewerFooter"] {
-        display: none !important;
-    }
-    
-    /* 3. 【復活左上角按鈕】: 把它從隱藏的 Header 屍體中救出來 */
-    /* 我們必須給它一個全新的「家」，直接固定在螢幕上 */
+    /* 側邊欄呼吸燈 */
     [data-testid="stSidebarCollapsedControl"] {
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        
-        /* 強制固定定位 */
-        position: fixed !important;
-        top: 15px !important;
-        left: 15px !important;
-        
-        /* 層級拉到最高，確保浮在所有內容之上 */
-        z-index: 999999999 !important;
-        
-        /* 樣式美化：讓它在深色或淺色背景都看得到 */
-        color: #FFD700 !important; /* 金色箭頭 */
-        background-color: rgba(20, 20, 20, 0.9) !important; /* 深黑底 */
-        border: 2px solid #FFD700 !important;
-        border-radius: 50% !important;
-        padding: 5px !important;
-        width: 45px !important;
-        height: 45px !important;
-        box-shadow: 0 0 15px rgba(255, 215, 0, 0.5) !important;
-        
-        /* 讓它能被點擊 */
-        pointer-events: auto !important;
+        animation: glowing 2s infinite;
+        z-index: 999999 !important;
+    }
+    @keyframes glowing {
+        0% { box-shadow: 0 0 5px #FFD700; transform: scale(1); }
+        50% { box-shadow: 0 0 15px #FF4B4B; transform: scale(1.1); }
+        100% { box-shadow: 0 0 5px #FFD700; transform: scale(1); }
     }
     
-    /* 4. 調整頂部內容間距 (因為 Header 沒了，內容會往上跑) */
-    .block-container {
-        padding-top: 60px !important; /* 留空間給左上角按鈕 */
-        padding-bottom: 50px !important; /* 手機版底部留白 */
-    }
-    
-    /* 5. 浮動指引文字 (配合新的按鈕位置) */
+    /* 浮動指引文字 */
     .sidebar-hint {
-        position: fixed; 
-        top: 25px; 
-        left: 70px; /* 放在按鈕右邊 */
-        z-index: 999999999;
-        background-color: #FF4B4B; 
-        color: white; 
-        padding: 5px 12px;
-        border-radius: 20px; 
-        font-size: 14px; 
-        font-weight: bold;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.5); 
-        animation: bounce 1.5s infinite;
+        position: fixed; top: 60px; left: 10px; z-index: 999999;
+        background-color: #FF4B4B; color: white; padding: 5px 10px;
+        border-radius: 15px; font-size: 12px; font-weight: bold;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3); animation: bounce 1.5s infinite;
         pointer-events: none;
     }
-    .sidebar-hint::before { 
-        content: "◀"; 
-        position: absolute; 
-        left: -12px; 
-        top: 6px;
-        color: #FF4B4B; 
-        font-size: 14px; 
-    }
-    
-    /* ================================================================= */
-
-    #MainMenu { display: none !important; }
-    
-    @keyframes bounce { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(5px); } }
+    .sidebar-hint::before { content: "▲"; position: absolute; top: -12px; left: 10px; color: #FF4B4B; font-size: 14px; }
+    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
 
     /* Hero Banner */
     .hero-container {
@@ -345,13 +329,13 @@ with st.sidebar:
     st.link_button("💬 加入 LINE 官方帳號", "https://lin.ee/3woTmES")
     st.markdown("---")
     st.markdown("### 📢 系統公告")
-    st.success("✅ 目前版本：V51.0 (終極越獄版)")
+    st.success("✅ 目前版本：V52.0 (核彈修復版)")
     with st.expander("📜 點此查看版本更新軌跡"):
         st.markdown("""
-        **V51.0 (終極越獄)**
-        - 🚀 強制左上角選單按鈕 Fixed 定位，解決消失問題。
-        - 🚫 使用屬性選擇器暴力隱藏右下角 Footer。
-        
+        **V52.0 (核彈修復)**
+        - ☢️ 注入 JavaScript 進行 DOM 清理，強制移除雲端版 Footer 與右上角干擾。
+        - 🔧 確保左上角按鈕在 JS 清理後依然被保護並顯形。
+
         **V50.0 (旗艦整合)**
         - 🎨 智能關鍵字著色。
         - 🔗 改裝戰略整合。
@@ -436,7 +420,11 @@ def highlight_keywords(text):
     
     # 進行替換 (使用正則表達式避免重複替換標籤內的字)
     for kw, color in keyword_colors.items():
+        # 簡單替換 (注意：這裡簡化處理，若有關鍵字重疊可能需更複雜邏輯)
+        # 為了避免替換掉 HTML tag 裡面的字，我們只替換那些沒有被 < > 包圍的字，但這裡用簡單 replace
+        # 技巧：先檢查是否已經被 span 包裹 (這裡暫略，假設輸入純文字)
         text = text.replace(kw, f"<span style='color:{color}; font-weight:bold;'>{kw}</span>")
+    
     return text
 
 def get_colored_text(elements_list):
