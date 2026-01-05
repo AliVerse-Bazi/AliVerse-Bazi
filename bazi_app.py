@@ -10,7 +10,7 @@ import textwrap
 import re
 import streamlit.components.v1 as components
 
-# --- 1. 網頁設定 (V50.6 終極修復版) ---
+# --- 1. 網頁設定 (V50.7 雲端手機修復版) ---
 st.set_page_config(
     page_title="AliVerse 八字五行分析 - 2026運勢免費測 | 原廠車型鑑定",
     page_icon="🏎️",
@@ -55,89 +55,79 @@ st.markdown("""
     <style>
     body { font-family: '微軟正黑體', sans-serif; }
     
-    /* === [V50.6] 品牌純淨化：終極暴力修正 === */
+    /* === [V50.7] 針對 Mobile 與 Cloud 的 CSS 修正 === */
     
-    /* 1. 處理頂部 Header：讓它完全透明，並不阻擋點擊 */
+    /* 1. 恢復 Header 顯示，但設為透明 (為了讓左側按鈕有地方住) */
     header[data-testid="stHeader"] {
         background: transparent !important;
-        pointer-events: none !important; /* 讓點擊穿透 Header */
-        z-index: 0 !important;
+        z-index: 9999 !important;
+        height: auto !important; /* 自動高度 */
     }
     
-    /* 2. 隱藏頂部彩條與右上角工具列 */
-    [data-testid="stDecoration"], [data-testid="stToolbar"], [data-testid="stHeaderActionElements"] {
+    /* 2. 隱藏頂部彩條 */
+    [data-testid="stDecoration"] {
+        display: none !important;
+    }
+    
+    /* 3. 精準隱藏「右上角」工具列 (貓咪、選單) */
+    [data-testid="stToolbar"] {
+        display: none !important;
+        visibility: hidden !important;
+    }
+    [data-testid="stHeaderActionElements"] {
         display: none !important;
         visibility: hidden !important;
     }
     
-    /* 3. 【關鍵修正】左上角側邊欄按鈕 (>>) 強制顯形與移位 */
+    /* 4. 【關鍵】強制「左上角」側邊欄按鈕顯示 */
     [data-testid="stSidebarCollapsedControl"] {
         display: block !important;
         visibility: visible !important;
-        pointer-events: auto !important; /* 恢復點擊 */
+        color: #FFD700 !important; /* 金色箭頭 */
+        background-color: rgba(20, 20, 30, 0.9) !important; /* 深色底 */
+        border: 1px solid #FFD700 !important;
+        border-radius: 50% !important;
         
-        /* 強制固定在螢幕左上角，脫離 Header 的控制 */
-        position: fixed !important; 
+        /* 強制固定定位，脫離 Header 限制 (防止被手機版 Header 隱藏) */
+        position: fixed !important;
         top: 15px !important;
         left: 15px !important;
-        z-index: 9999999 !important; /* 最高層級 */
-        
-        /* 美化按鈕：變成金色圓鈕 */
-        background-color: #FFD700 !important;
-        color: #000 !important;
-        border-radius: 50% !important;
-        width: 45px !important;
-        height: 45px !important;
-        box-shadow: 0 4px 15px rgba(255, 215, 0, 0.6) !important;
-        border: 2px solid #fff !important;
-        transition: transform 0.2s;
-    }
-    /* 按鈕懸停效果 */
-    [data-testid="stSidebarCollapsedControl"]:hover {
-        transform: scale(1.1);
+        z-index: 100000 !important; /* 確保在最上層 */
+        width: 40px !important;
+        height: 40px !important;
     }
     
-    /* 4. 【關鍵修正】暴力隱藏所有可能的 Footer (包含雲端版) */
-    footer, .stFooter {
-        display: none !important;
-        visibility: hidden !important;
-        height: 0 !important;
-        opacity: 0 !important;
-    }
-    /* 針對 Streamlit Cloud 的 Viewer Footer */
-    .viewerFooter-root, .viewerFooter-container {
-        display: none !important;
-        visibility: hidden !important;
-    }
-    /* 針對 iframe 嵌入式的 Footer */
-    iframe[title="Streamlit footer"] {
-        display: none !important;
-    }
+    /* 5. 【關鍵】暴力隱藏 Cloud 版 Footer */
+    /* 本機版 Footer */
+    footer { display: none !important; }
+    /* Streamlit Cloud 專用 Footer */
+    #MainMenu + div { visibility: hidden; }
+    div[class*="viewerFooter"] { display: none !important; height: 0px !important; }
     
-    /* 5. 調整內容間距，避免被固定按鈕擋住 */
+    /* 6. 調整頂部留白 (避免內容被按鈕擋住) */
     .block-container {
-        padding-top: 50px !important;
-        padding-bottom: 50px !important;
+        padding-top: 60px !important;
+        padding-bottom: 20px !important;
     }
     
-    /* 6. 浮動指引文字 (配合新的按鈕位置) */
+    /* 7. 浮動指引文字位置微調 */
     .sidebar-hint {
         position: fixed; 
         top: 25px; 
-        left: 70px; /* 移到按鈕右邊 */
-        z-index: 999999;
+        left: 65px; /* 放在按鈕右邊 */
+        z-index: 100000;
         background-color: #FF4B4B; 
         color: white; 
         padding: 5px 12px;
         border-radius: 20px; 
         font-size: 14px; 
         font-weight: bold;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.3); 
+        box-shadow: 0 4px 10px rgba(0,0,0,0.5); 
         animation: bounce 1.5s infinite;
         pointer-events: none;
     }
     .sidebar-hint::before { 
-        content: "◀"; /* 指向左邊的按鈕 */
+        content: "◀"; 
         position: absolute; 
         left: -12px; 
         top: 6px;
@@ -345,15 +335,16 @@ with st.sidebar:
     st.link_button("💬 加入 LINE 官方帳號", "https://lin.ee/3woTmES")
     st.markdown("---")
     st.markdown("### 📢 系統公告")
-    st.success("✅ 目前版本：V50.6 (終極修復版)")
+    st.success("✅ 目前版本：V50.7 (雲端手機修復版)")
     with st.expander("📜 點此查看版本更新軌跡"):
         st.markdown("""
-        **V50.6 (終極修復)**
-        - 🔧 側邊欄按鈕：強制移至最上層並固定，解決消失問題。
-        - 🚫 Footer：使用 CSS 暴力隱藏所有類型的頁尾。
-        
-        **V50.5 (UI修復)**
-        - 🔧 Header 透明化。
+        **V50.7 (雲端修復)**
+        - 🔧 強制左側選單按鈕固定於螢幕左上角 (position: fixed)。
+        - 🚫 針對 Streamlit Cloud 的 Viewer Footer 進行暴力隱藏。
+
+        **V50.0 (旗艦整合)**
+        - 🎨 智能關鍵字著色。
+        - 🔗 改裝戰略整合。
         """)
     st.markdown("---")
     st.markdown("© 2026 AliVerse")
@@ -435,7 +426,11 @@ def highlight_keywords(text):
     
     # 進行替換 (使用正則表達式避免重複替換標籤內的字)
     for kw, color in keyword_colors.items():
+        # 簡單替換 (注意：這裡簡化處理，若有關鍵字重疊可能需更複雜邏輯)
+        # 為了避免替換掉 HTML tag 裡面的字，我們只替換那些沒有被 < > 包圍的字，但這裡用簡單 replace
+        # 技巧：先檢查是否已經被 span 包裹 (這裡暫略，假設輸入純文字)
         text = text.replace(kw, f"<span style='color:{color}; font-weight:bold;'>{kw}</span>")
+    
     return text
 
 def get_colored_text(elements_list):
@@ -488,6 +483,11 @@ def get_hidden_stems(branch):
 # [Logic] 全系統喜忌神同步判定邏輯 (含專家覆寫)
 # ==========================================
 def determine_fates_guide(day_master, month_idx):
+    """
+    根據日主與出生月，決定【喜用神】與【忌神】
+    expert_override: 針對特定格局 (如 Ali 的壬水酉月) 給予精準建議
+    return: (joyful_list, taboo_list, description)
+    """
     joyful = []
     taboo = []
     reason = ""
@@ -672,7 +672,7 @@ if st.session_state['analyzed']:
         if char_wx == day_master_wx or char_wx == resource_wx:
             score += w
     
-    # 計算格局分數 (保持強弱判定邏輯，但喜忌神使用新邏輯覆寫)
+    # 計算格局分數
     strength_type = ""
     ascii_art = ""
     base_type = ""
@@ -697,6 +697,108 @@ if st.session_state['analyzed']:
         base_type = "🛸 未來概念車"
         ascii_art = """      .---.\n    _/__~__\_\n   (_________)\n    /       \ \n   [   UFO   ]"""
         soul_message = f"親愛的 {day_master_wx} 行概念車駕駛：您是變色龍。不要被世俗的「自我」框架綁住。當您與趨勢合而為一，您就是趨勢本身。"
+
+    # =======================================================
+    # [V48.0 Upgrade] 使用新函數同步喜忌神
+    # =======================================================
+    joyful_gods, taboo_gods, god_reason = determine_fates_guide(day_master_wx, int(inp_month))
+
+    # 提早定義顏色與運勢
+    factory_color_hex = COLOR_MAP.get(day_master_wx, "#888")
+    
+    lucky_colors_list = [color_dict['name'] for wx in joyful_gods for name, color_dict in {'木':{'name':'叢林綠'}, '火':{'name':'法拉利紅'}, '土':{'name':'大地棕'}, '金':{'name':'鈦金銀'}, '水':{'name':'深海藍'}}.items() if name == wx]
+    taboo_colors_list = [color_dict['name'] for wx in taboo_gods for name, color_dict in {'木':{'name':'叢林綠'}, '火':{'name':'法拉利紅'}, '土':{'name':'大地棕'}, '金':{'name':'鈦金銀'}, '水':{'name':'深海藍'}}.items() if name == wx]
+    
+    lucky_html = get_colored_text(joyful_gods)
+    taboo_html = get_colored_text(taboo_gods)
+
+    advice_2026 = ""
+    if "火" in joyful_gods:
+        advice_2026 = "2026 丙午火年，對您來說是絕佳的「氮氣加速」機會！流年火氣正旺，剛好補足您的動力缺口。易經卦象建議：大膽超車，創業或投資皆有利。"
+    else:
+        advice_2026 = "2026 丙午火年，火氣過旺，容易導致引擎過熱（情緒急躁、發炎）。易經卦象建議：切換至「定速巡航」模式，多穿戴「水/金」能量（藍/白）來降溫平衡。"
+
+    def get_real_car_model(upper_num, lower_num):
+        if upper_num == 1: return "Bugatti Chiron" if lower_num==1 else "Rolls-Royce" if lower_num==3 else "Mercedes-Benz S-Class"
+        if upper_num == 8: return "Toyota Alphard" if lower_num==8 else "Range Rover" if lower_num==3 else "Land Cruiser"
+        if upper_num == 3: return "Ferrari F8" if lower_num==3 else "Porsche 911"
+        if upper_num == 6: return "Tesla Model S" if lower_num==6 else "BMW i7"
+        if upper_num == 4: return "Nissan GT-R"
+        if upper_num == 5: return "McLaren 720S"
+        if upper_num == 7: return "Mercedes-Benz G-Class"
+        if upper_num == 2: return "Mazda MX-5"
+        return "Lexus LC500"
+    
+    def get_car_quote(upper_num, lower_num):
+        if upper_num == 1: return "你的目標在雲端，不與凡車爭道。"
+        if upper_num == 8: return "厚德載物，能容納所有人的夢想。"
+        if upper_num == 3: return "你的存在就是為了燃燒與尖叫。"
+        if upper_num == 6: return "適應力強，科技感十足。"
+        return "獨特品味，融合了多種優點。"
+
+    upper_num = (int(inp_year) + int(inp_month) + int(inp_day)) % 8
+    if upper_num == 0: upper_num = 8
+    hour_num = (h_idx // 2) + 1
+    if h_idx == 23: hour_num = 1
+    lower_num = (int(inp_year) + int(inp_month) + int(inp_day) + hour_num) % 8
+    if lower_num == 0: lower_num = 8
+    
+    real_car_model = get_real_car_model(upper_num, lower_num)
+    car_quote = get_car_quote(upper_num, lower_num)
+
+    # --- 動畫 ---
+    if submit_btn:
+        animation_placeholder = st.empty()
+        def show_hud(speed, status_text, text_style):
+            percent = min(speed / 333 * 100, 100)
+            animation_placeholder.markdown(f"""
+            <div class="hud-overlay">
+                <div class="hud-grid"></div>
+                <div class="speed-container">
+                    <div class="speed-val" style="{text_style}">{speed}</div>
+                    <div class="speed-unit">km/h</div>
+                    <div class="rpm-bar"><div class="rpm-fill" style="width: {percent}%;"></div></div>
+                </div>
+                <div class="hud-status">{status_text}</div>
+            </div>
+            """, unsafe_allow_html=True)
+        for s in range(0, 81, 5):
+            show_hud(s, "系統暖機程序啟動...", "color: #39FF14; text-shadow: 0 0 15px #39FF14;")
+            time.sleep(0.02)
+        for s in range(81, 181, 10):
+            show_hud(s, "十神系統連線中...", "color: #FFD700; text-shadow: 0 0 20px #FFD700;")
+            time.sleep(0.01)
+        for s in range(181, 281, 15):
+            show_hud(s, "動力極限輸出！⚠️", "color: #FF4500; text-shadow: 0 0 25px #FF4500;")
+            time.sleep(0.01)
+        animation_placeholder.empty()
+
+    # --- 結果顯示 ---
+    st.write("---")
+    # [V44] 插入錨點：結果區
+    st.markdown("<div id='result-anchor'></div>", unsafe_allow_html=True)
+    # [V44] 執行自動捲動 (檢查訊號)
+    if st.session_state.get('do_scroll_to') == 'result-anchor':
+        scroll_to('result-anchor')
+        st.session_state['do_scroll_to'] = None # 重置訊號
+
+    # [V49] 步驟一：原廠規格
+    st.subheader("🏎️ 步驟一：原廠出廠規格 (Original Spec)")
+    
+    car_card_html = (
+        f'<div style="padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border: 2px solid {factory_color_hex}; background-color: rgba(0,0,0,0.3);">'
+        f'<h2 style="margin-bottom: 5px; color: #fff;">{base_type}</h2>'
+        f'<div style="color: #FFD700; font-weight: bold; margin-bottom: 10px;">{real_car_model}</div>'
+        f'<div class="ascii-art">{ascii_art}</div>'
+        f'<div class="god-tag-container">'
+        f'<div class="god-box"><div class="god-label">引擎規格</div><div class="god-value neutral">{strength_type}</div></div>'
+        f'<div class="god-box"><div class="god-label">幸運燃料 (喜用)</div><div class="god-value">{lucky_html}</div></div>'
+        f'<div class="god-box"><div class="god-label">引擎殺手 (忌神)</div><div class="god-value">{taboo_html}</div></div>'
+        f'</div>'
+        f'<p style="font-style: italic; color: #aaa; margin-top: 15px; font-size: 0.9em;">"{car_quote}"</p>'
+        f'</div>'
+    )
+    st.markdown(car_card_html, unsafe_allow_html=True)
 
     # =======================================================
     # [V49] 橋樑：技師總監的改裝診斷 (The Bridge)
